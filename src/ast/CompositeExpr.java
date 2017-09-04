@@ -3,7 +3,6 @@ package ast;
 import lexer.*;
 import java.util.HashMap;
 
-//teste
 public class CompositeExpr extends Expr {
 
     public CompositeExpr( Expr pleft, Symbol poper, Expr pright ) {
