@@ -107,10 +107,10 @@ public class Compiler {
 	}
 
 	private void classDec() {
-		// Note que os métodos desta classe não correspondem exatamente às
+		// Note que os mï¿½todos desta classe nï¿½o correspondem exatamente ï¿½s
 		// regras
-		// da gramática. Este método classDec, por exemplo, implementa
-		// a produção KraClass (veja abaixo) e partes de outras produções.
+		// da gramï¿½tica. Este mï¿½todo classDec, por exemplo, implementa
+		// a produï¿½ï¿½o KraClass (veja abaixo) e partes de outras produï¿½ï¿½es.
 
 		/*
 		 * KraClass ::= ``class'' Id [ ``extends'' Id ] "{" MemberList "}"
@@ -138,14 +138,16 @@ public class Compiler {
 		if ( lexer.token != Symbol.LEFTCURBRACKET )
 			signalError.showError("{ expected", true);
 		lexer.nextToken();
-
+                
 		while (lexer.token == Symbol.PRIVATE || lexer.token == Symbol.PUBLIC) {
-
+                        
 			Symbol qualifier;
-			switch (lexer.token) {
+                        
+			switch (lexer.token) {   
 			case PRIVATE:
 				lexer.nextToken();
 				qualifier = Symbol.PRIVATE;
+                                
 				break;
 			case PUBLIC:
 				lexer.nextToken();
@@ -155,7 +157,9 @@ public class Compiler {
 				signalError.showError("private, or public expected");
 				qualifier = Symbol.PUBLIC;
 			}
+                       
 			Type t = type();
+                       
 			if ( lexer.token != Symbol.IDENT )
 				signalError.showError("Identifier expected");
 			String name = lexer.getStringValue();
@@ -215,6 +219,11 @@ public class Compiler {
 		Type type = type();
 		if ( lexer.token != Symbol.IDENT ) signalError.showError("Identifier expected");
 		Variable v = new Variable(lexer.getStringValue(), type);
+                
+                 if(lexer.token != Symbol.COMMA && lexer.token != Symbol.SEMICOLON){
+                    signalError.showError("Missing ';'");
+                }
+                
 		lexer.nextToken();
 		while (lexer.token == Symbol.COMMA) {
 			lexer.nextToken();
@@ -222,7 +231,8 @@ public class Compiler {
 				signalError.showError("Identifier expected");
 			v = new Variable(lexer.getStringValue(), type);
 			lexer.nextToken();
-		}
+                        
+		} 
 	}
 
 	private void formalParamDec() {
@@ -246,8 +256,9 @@ public class Compiler {
 	private Type type() {
 		// Type ::= BasicType | Id
 		Type result;
-
+                
 		switch (lexer.token) {
+                    
 		case VOID:
 			result = Type.voidType;
 			break;
@@ -261,9 +272,9 @@ public class Compiler {
 			result = Type.stringType;
 			break;
 		case IDENT:
-			// # corrija: faça uma busca na TS para buscar a classe
+			// # corrija: faï¿½a uma busca na TS para buscar a classe
 			// IDENT deve ser uma classe.
-			result = null;
+			result = Type.identType;
 			break;
 		default:
 			signalError.showError("Type expected");
@@ -365,8 +376,8 @@ public class Compiler {
 	}
 
 	/*
-	 * retorne true se 'name' é uma classe declarada anteriormente. É necessário
-	 * fazer uma busca na tabela de símbolos para isto.
+	 * retorne true se 'name' ï¿½ uma classe declarada anteriormente. ï¿½ necessï¿½rio
+	 * fazer uma busca na tabela de sï¿½mbolos para isto.
 	 */
 	private boolean isType(String name) {
 		return this.symbolTable.getInGlobal(name) != null;
@@ -379,11 +390,11 @@ public class Compiler {
 
 		if ( lexer.token == Symbol.INT || lexer.token == Symbol.BOOLEAN
 				|| lexer.token == Symbol.STRING ||
-				// token é uma classe declarada textualmente antes desta
-				// instrução
+				// token ï¿½ uma classe declarada textualmente antes desta
+				// instruï¿½ï¿½o
 				(lexer.token == Symbol.IDENT && isType(lexer.getStringValue())) ) {
 			/*
-			 * uma declaração de variável. 'lexer.token' é o tipo da variável
+			 * uma declaraï¿½ï¿½o de variï¿½vel. 'lexer.token' ï¿½ o tipo da variï¿½vel
 			 * 
 			 * AssignExprLocalDec ::= Expression [ ``$=$'' Expression ] | LocalDec 
 			 * LocalDec ::= Type IdList ``;''
@@ -681,7 +692,7 @@ public class Compiler {
 				signalError.showError("Identifier expected");
 			messageName = lexer.getStringValue();
 			/*
-			 * para fazer as conferências semânticas, procure por 'messageName'
+			 * para fazer as conferï¿½ncias semï¿½nticas, procure por 'messageName'
 			 * na superclasse/superclasse da superclasse etc
 			 */
 			lexer.nextToken();
@@ -715,10 +726,10 @@ public class Compiler {
 					if ( lexer.token == Symbol.DOT ) {
 						// Id "." Id "." Id "(" [ ExpressionList ] ")"
 						/*
-						 * se o compilador permite variáveis estáticas, é possível
-						 * ter esta opção, como
+						 * se o compilador permite variï¿½veis estï¿½ticas, ï¿½ possï¿½vel
+						 * ter esta opï¿½ï¿½o, como
 						 *     Clock.currentDay.setDay(12);
-						 * Contudo, se variáveis estáticas não estiver nas especificações,
+						 * Contudo, se variï¿½veis estï¿½ticas nï¿½o estiver nas especificaï¿½ï¿½es,
 						 * sinalize um erro neste ponto.
 						 */
 						lexer.nextToken();
@@ -733,8 +744,8 @@ public class Compiler {
 						// Id "." Id "(" [ ExpressionList ] ")"
 						exprList = this.realParameters();
 						/*
-						 * para fazer as conferências semânticas, procure por
-						 * método 'ident' na classe de 'firstId'
+						 * para fazer as conferï¿½ncias semï¿½nticas, procure por
+						 * mï¿½todo 'ident' na classe de 'firstId'
 						 */
 					}
 					else {
@@ -756,7 +767,7 @@ public class Compiler {
 			if ( lexer.token != Symbol.DOT ) {
 				// only 'this'
 				// retorne um objeto da ASA que representa 'this'
-				// confira se não estamos em um método estático
+				// confira se nï¿½o estamos em um mï¿½todo estï¿½tico
 				return null;
 			}
 			else {
@@ -765,12 +776,12 @@ public class Compiler {
 					signalError.showError("Identifier expected");
 				id = lexer.getStringValue();
 				lexer.nextToken();
-				// já analisou "this" "." Id
+				// jï¿½ analisou "this" "." Id
 				if ( lexer.token == Symbol.LEFTPAR ) {
 					// "this" "." Id "(" [ ExpressionList ] ")"
 					/*
-					 * Confira se a classe corrente possui um método cujo nome é
-					 * 'ident' e que pode tomar os parâmetros de ExpressionList
+					 * Confira se a classe corrente possui um mï¿½todo cujo nome ï¿½
+					 * 'ident' e que pode tomar os parï¿½metros de ExpressionList
 					 */
 					exprList = this.realParameters();
 				}
@@ -786,7 +797,7 @@ public class Compiler {
 					// retorne o objeto da ASA que representa "this" "." Id
 					/*
 					 * confira se a classe corrente realmente possui uma
-					 * variável de instância 'ident'
+					 * variï¿½vel de instï¿½ncia 'ident'
 					 */
 					return null;
 				}
