@@ -123,6 +123,8 @@ public class Lexer {
                   token = Symbol.IDENT;
                 else
                   token = value;
+                
+                
             }
             else if ( Character.isDigit( ch ) ) {
                 // get a number

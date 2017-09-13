@@ -52,6 +52,7 @@ public enum Symbol {
     VOID("void"),
     WHILE("while"),
     WRITE("write"),
+    STATIC("static"),
     WRITELN("writeln");
 
 	Symbol(String name) {

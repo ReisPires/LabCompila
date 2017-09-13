@@ -167,11 +167,16 @@ public class Compiler {
 				qualifier = Symbol.PUBLIC;
 			}
                        
+                        if(lexer.token == Symbol.STATIC){
+                            signalError.showError("Identifier expected");
+                        }
+                        
 			Type t = type();
-                       
+                        
 			if ( lexer.token != Symbol.IDENT )
 				signalError.showError("Identifier expected");
 			String name = lexer.getStringValue();
+                        
                         if (name.compareTo("run") == 0){
                             isRun = true;
                         }
@@ -237,7 +242,7 @@ public class Compiler {
 		Variable v = new Variable(lexer.getStringValue(), type);
                 
                  if(lexer.token != Symbol.COMMA && lexer.token != Symbol.SEMICOLON){
-                    signalError.showError("Missing ';'");
+                    signalError.showError("Missing ';'", true);
                 }
                 
 		lexer.nextToken();
@@ -807,11 +812,13 @@ public class Compiler {
 				lexer.nextToken();
 				// j� analisou "this" "." Id
 				if ( lexer.token == Symbol.LEFTPAR ) {
-					// "this" "." Id "(" [ ExpressionList ] ")"
-					/*
-					 * Confira se a classe corrente possui um m�todo cujo nome �
-					 * 'ident' e que pode tomar os par�metros de ExpressionList
-					 */
+                                    // "this" "." Id "(" [ ExpressionList ] ")"
+                                    /*
+                                     * Confira se a classe corrente possui um m�todo cujo nome �
+                                     * 'ident' e que pode tomar os par�metros de ExpressionList
+                                     */
+                                    Variable var = symbolTable.getInLocal(id);
+                                        
 					exprList = this.realParameters();
 				}
 				else if ( lexer.token == Symbol.DOT ) {
