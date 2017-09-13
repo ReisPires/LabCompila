@@ -36,6 +36,11 @@ public class Compiler {
 			classDec();
 			while ( lexer.token == Symbol.CLASS )
 				classDec();
+                        
+                        if(symbolTable.getInGlobal("Program") == null){
+                            signalError.showError("Source code without a class 'Program'");
+                        }
+                        
 			if ( lexer.token != Symbol.EOF ) {
 				signalError.showError("End of file expected");
 			}
@@ -120,11 +125,15 @@ public class Compiler {
 		 * MethodDec ::= Qualifier Type Id "("[ FormalParamDec ] ")" "{" StatementList "}" 
 		 * Qualifier ::= [ "static" ]  ( "private" | "public" )
 		 */
+                boolean isRun = false;
+                
 		if ( lexer.token != Symbol.CLASS ) signalError.showError("'class' expected");
 		lexer.nextToken();
 		if ( lexer.token != Symbol.IDENT )
 			signalError.show(ErrorSignaller.ident_expected);
 		String className = lexer.getStringValue();
+                
+                
 		symbolTable.putInGlobal(className, new KraClass(className));
 		lexer.nextToken();
 		if ( lexer.token == Symbol.EXTENDS ) {
@@ -163,6 +172,9 @@ public class Compiler {
 			if ( lexer.token != Symbol.IDENT )
 				signalError.showError("Identifier expected");
 			String name = lexer.getStringValue();
+                        if (name.compareTo("run") == 0){
+                            isRun = true;
+                        }
 			lexer.nextToken();
 			if ( lexer.token == Symbol.LEFTPAR )
 				methodDec(t, name, qualifier);
@@ -171,6 +183,10 @@ public class Compiler {
 			else
 				instanceVarDec(t, name);
 		}
+                
+                if ((className.compareTo("Program") == 0) && isRun == false ){
+                    signalError.showError("Method 'run' was not found in class 'Program");
+                }
 		if ( lexer.token != Symbol.RIGHTCURBRACKET )
 			signalError.showError("public/private or \"}\" expected");
 		lexer.nextToken();
@@ -387,24 +403,29 @@ public class Compiler {
 	 * AssignExprLocalDec ::= Expression [ ``$=$'' Expression ] | LocalDec
 	 */
 	private Expr assignExprLocalDec() {
-
+                
 		if ( lexer.token == Symbol.INT || lexer.token == Symbol.BOOLEAN
 				|| lexer.token == Symbol.STRING ||
 				// token � uma classe declarada textualmente antes desta
 				// instru��o
-				(lexer.token == Symbol.IDENT && isType(lexer.getStringValue())) ) {
+				(lexer.token == Symbol.IDENT) ) {
 			/*
 			 * uma declara��o de vari�vel. 'lexer.token' � o tipo da vari�vel
 			 * 
 			 * AssignExprLocalDec ::= Expression [ ``$=$'' Expression ] | LocalDec 
 			 * LocalDec ::= Type IdList ``;''
 			 */
+                        
+                        if(lexer.token == Symbol.IDENT && !isType(lexer.getStringValue())){
+                           signalError.showError("Statement expected");
+                        }
 			localDec();
 		}
 		else {
 			/*
 			 * AssignExprLocalDec ::= Expression [ ``$=$'' Expression ]
 			 */
+                        
 			expr();
 			if ( lexer.token == Symbol.ASSIGN ) {
 				lexer.nextToken();
@@ -542,7 +563,7 @@ public class Compiler {
 	}
 
 	private Expr expr() {
-
+            
 		Expr left = simpleExpr();
 		Symbol op = lexer.token;
 		if ( op == Symbol.EQ || op == Symbol.NEQ || op == Symbol.LE
@@ -654,11 +675,15 @@ public class Compiler {
 				signalError.showError("Identifier expected");
 
 			String className = lexer.getStringValue();
-			/*
-			 * // encontre a classe className in symbol table KraClass 
-			 *      aClass = symbolTable.getInGlobal(className); 
-			 *      if ( aClass == null ) ...
-			 */
+                        
+			
+                // encontre a classe className in symbol table KraClass
+                        KraClass aClass = symbolTable.getInGlobal(className); 
+			
+                        if ( aClass == null ) {
+                            signalError.showError("Class '" + className + "' was not found");
+                        }
+			
 
 			lexer.nextToken();
 			if ( lexer.token != Symbol.LEFTPAR ) signalError.showError("( expected");
@@ -668,6 +693,10 @@ public class Compiler {
 			/*
 			 * return an object representing the creation of an object
 			 */
+                        if( aClass != null){
+                            
+                           // return new 
+                        }
 			return null;
 			/*
           	 * PrimaryExpr ::= "super" "." Id "(" [ ExpressionList ] ")"  | 
