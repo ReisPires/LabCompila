@@ -182,6 +182,7 @@ public class Compiler {
                         }
 			lexer.nextToken();
 			if ( lexer.token == Symbol.LEFTPAR )
+                            
 				methodDec(t, name, qualifier);
 			else if ( qualifier != Symbol.PRIVATE )
 				signalError.showError("Attempt to declare a public instance variable");
@@ -240,12 +241,12 @@ public class Compiler {
 		Type type = type();
 		if ( lexer.token != Symbol.IDENT ) signalError.showError("Identifier expected");
 		Variable v = new Variable(lexer.getStringValue(), type);
-                
-                 if(lexer.token != Symbol.COMMA && lexer.token != Symbol.SEMICOLON){
-                    signalError.showError("Missing ';'", true);
-                }
-                
+       
 		lexer.nextToken();
+                
+                if(lexer.token != Symbol.COMMA && lexer.token != Symbol.SEMICOLON){
+                     signalError.showError("Missing ';'", true);
+                }
 		while (lexer.token == Symbol.COMMA) {
 			lexer.nextToken();
 			if ( lexer.token != Symbol.IDENT )
@@ -413,17 +414,13 @@ public class Compiler {
 				|| lexer.token == Symbol.STRING ||
 				// token � uma classe declarada textualmente antes desta
 				// instru��o
-				(lexer.token == Symbol.IDENT) ) {
+				(lexer.token == Symbol.IDENT) && isType(lexer.getStringValue()) ) {
 			/*
 			 * uma declara��o de vari�vel. 'lexer.token' � o tipo da vari�vel
 			 * 
 			 * AssignExprLocalDec ::= Expression [ ``$=$'' Expression ] | LocalDec 
 			 * LocalDec ::= Type IdList ``;''
 			 */
-                        
-                        if(lexer.token == Symbol.IDENT && !isType(lexer.getStringValue())){
-                           signalError.showError("Statement expected");
-                        }
 			localDec();
 		}
 		else {
@@ -441,6 +438,7 @@ public class Compiler {
 					lexer.nextToken();
 			}
 		}
+                
 		return null;
 	}
 
@@ -517,13 +515,16 @@ public class Compiler {
 			signalError.show(ErrorSignaller.semicolon_expected);
 		lexer.nextToken();
 	}
-
+        
+        //“write” “(” ExpressionList “)”
 	private void writeStatement() {
 
 		lexer.nextToken();
 		if ( lexer.token != Symbol.LEFTPAR ) signalError.showError("( expected");
 		lexer.nextToken();
-		exprList();
+                ExprList exprList = exprList();
+                
+                
 		if ( lexer.token != Symbol.RIGHTPAR ) signalError.showError(") expected");
 		lexer.nextToken();
 		if ( lexer.token != Symbol.SEMICOLON )
@@ -818,7 +819,7 @@ public class Compiler {
                                      * 'ident' e que pode tomar os par�metros de ExpressionList
                                      */
                                     Variable var = symbolTable.getInLocal(id);
-                                        
+
 					exprList = this.realParameters();
 				}
 				else if ( lexer.token == Symbol.DOT ) {
