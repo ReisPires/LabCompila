@@ -222,6 +222,7 @@ public class Compiler {
 		 *                StatementList "}"
 		 */
                 String classe;
+                boolean isProgramRun = false;
                 if( (classe = (String) curClass.pop()).compareTo("Program") == 0 && name.compareTo("run") == 0){
                     
                     if (qualifier == Symbol.PRIVATE){
@@ -230,10 +231,16 @@ public class Compiler {
                     if (type != Type.voidType){
                         signalError.showError("Method '" +  name + "' of class '" + classe + "' with a return value type different from 'void'");
                     }
+                    isProgramRun = true;
                 }
-                curClass.push(classe);
+                
 		lexer.nextToken();
 		if ( lexer.token != Symbol.RIGHTPAR ) formalParamDec();
+                 /*   
+                if (isProgramRun == true && formalParamDec() != null){
+                    signalError.showError("Method '" +  name + "' of class '" + classe + "' cannot take parameters");
+
+                }*/
 		if ( lexer.token != Symbol.RIGHTPAR ) signalError.showError(") expected");
 
 		lexer.nextToken();
@@ -244,7 +251,7 @@ public class Compiler {
 		if ( lexer.token != Symbol.RIGHTCURBRACKET ) signalError.showError("} expected");
 
 		lexer.nextToken();
-
+                curClass.push(classe);
 	}
 
 	private void localDec() {
@@ -466,7 +473,7 @@ public class Compiler {
 	}
 
 	private void whileStatement() {
-
+            whileStmt.push("true");
 		lexer.nextToken();
 		if ( lexer.token != Symbol.LEFTPAR ) signalError.showError("( expected");
 		lexer.nextToken();
@@ -474,6 +481,7 @@ public class Compiler {
 		if ( lexer.token != Symbol.RIGHTPAR ) signalError.showError(") expected");
 		lexer.nextToken();
 		statement();
+            whileStmt.pop();    
 	}
 
 	private void ifStatement() {
@@ -558,6 +566,11 @@ public class Compiler {
 	}
 
 	private void breakStatement() {
+            
+            if(whileStmt.empty()){ 
+                
+                signalError.showError("Command 'break' outside a command 'while'");       
+            }
 		lexer.nextToken();
 		if ( lexer.token != Symbol.SEMICOLON )
 			signalError.show(ErrorSignaller.semicolon_expected);
@@ -884,4 +897,5 @@ public class Compiler {
 	private Lexer			lexer;
 	private ErrorSignaller	signalError;
         private Stack curClass = new Stack();
+        private Stack whileStmt = new Stack();
 }
