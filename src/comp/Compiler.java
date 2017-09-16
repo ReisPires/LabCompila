@@ -222,8 +222,14 @@ public class Compiler {
 		 *                StatementList "}"
 		 */
                 String classe;
-                if( (classe = (String) curClass.pop()).compareTo("Program") == 0 && name.compareTo("run") == 0 && qualifier == Symbol.PRIVATE){
-                    signalError.showError("Method '" +  name + "' of class '" + classe +"' cannot be private");
+                if( (classe = (String) curClass.pop()).compareTo("Program") == 0 && name.compareTo("run") == 0){
+                    
+                    if (qualifier == Symbol.PRIVATE){
+                        signalError.showError("Method '" +  name + "' of class '" + classe +"' cannot be private");
+                    }
+                    if (type != Type.voidType){
+                        signalError.showError("Method '" +  name + "' of class '" + classe + "' with a return value type different from 'void'");
+                    }
                 }
                 curClass.push(classe);
 		lexer.nextToken();
