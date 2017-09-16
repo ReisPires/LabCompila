@@ -126,7 +126,7 @@ public class Compiler {
 		 * Qualifier ::= [ "static" ]  ( "private" | "public" )
 		 */
                 boolean isRun = false;
-                
+                           
 		if ( lexer.token != Symbol.CLASS ) signalError.showError("'class' expected");
 		lexer.nextToken();
 		if ( lexer.token != Symbol.IDENT )
@@ -135,6 +135,8 @@ public class Compiler {
                 
                 
 		symbolTable.putInGlobal(className, new KraClass(className));
+                curClass.push(className);
+                
 		lexer.nextToken();
 		if ( lexer.token == Symbol.EXTENDS ) {
 			lexer.nextToken();
@@ -196,7 +198,7 @@ public class Compiler {
 		if ( lexer.token != Symbol.RIGHTCURBRACKET )
 			signalError.showError("public/private or \"}\" expected");
 		lexer.nextToken();
-
+                curClass.pop();
 	}
 
 	private void instanceVarDec(Type type, String name) {
@@ -219,7 +221,11 @@ public class Compiler {
 		 * MethodDec ::= Qualifier Return Id "("[ FormalParamDec ] ")" "{"
 		 *                StatementList "}"
 		 */
-
+                String classe;
+                if( (classe = (String) curClass.pop()).compareTo("Program") == 0 && name.compareTo("run") == 0 && qualifier == Symbol.PRIVATE){
+                    signalError.showError("Method '" +  name + "' of class '" + classe +"' cannot be private");
+                }
+                curClass.push(classe);
 		lexer.nextToken();
 		if ( lexer.token != Symbol.RIGHTPAR ) formalParamDec();
 		if ( lexer.token != Symbol.RIGHTPAR ) signalError.showError(") expected");
@@ -871,5 +877,5 @@ public class Compiler {
 	private SymbolTable		symbolTable;
 	private Lexer			lexer;
 	private ErrorSignaller	signalError;
-
+        private Stack curClass = new Stack();
 }
