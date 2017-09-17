@@ -252,6 +252,7 @@ public class Compiler {
 
 		lexer.nextToken();
                 curClass.push(classe);
+                symbolTable.removeLocalIdent();
 	}
 
 	private void localDec() {
@@ -260,7 +261,14 @@ public class Compiler {
 		Type type = type();
 		if ( lexer.token != Symbol.IDENT ) signalError.showError("Identifier expected");
 		Variable v = new Variable(lexer.getStringValue(), type);
-       
+
+                if(symbolTable.getInLocal(v.getName()) != null){
+                    signalError.showError("Variable '" + v.getName() + "' is being redeclared", true);
+                } else{
+                    symbolTable.putInLocal(v.getName(), v);
+                   
+                }
+                
 		lexer.nextToken();
                 
                 if(lexer.token != Symbol.COMMA && lexer.token != Symbol.SEMICOLON){
@@ -271,6 +279,12 @@ public class Compiler {
 			if ( lexer.token != Symbol.IDENT )
 				signalError.showError("Identifier expected");
 			v = new Variable(lexer.getStringValue(), type);
+                        
+                        if(symbolTable.getInLocal(v.getName()) != null){
+                            signalError.showError("Variable '" + v.getName() + "'is being redeclared");
+                        } else{
+                            symbolTable.putInLocal(v.getName(), v);
+                        }
 			lexer.nextToken();
                         
 		} 
@@ -289,8 +303,11 @@ public class Compiler {
 	private void paramDec() {
 		// ParamDec ::= Type Id
 
-		type();
+		Type t = type();
 		if ( lexer.token != Symbol.IDENT ) signalError.showError("Identifier expected");
+                Variable v = new Variable(lexer.getStringValue(), t);
+                symbolTable.putInLocal(v.getName(), v);
+                
 		lexer.nextToken();
 	}
 
@@ -768,10 +785,14 @@ public class Compiler {
 			 */
 
 			String firstId = lexer.getStringValue();
+                        
 			lexer.nextToken();
 			if ( lexer.token != Symbol.DOT ) {
 				// Id
 				// retorne um objeto da ASA que representa um identificador
+                                if(symbolTable.getInLocal(firstId) == null){
+                                   signalError.showError("Identifier '" + firstId + "' was not found");
+                                }
 				return null;
 			}
 			else { // Id "."
@@ -810,6 +831,7 @@ public class Compiler {
 					}
 					else {
 						// retorne o objeto da ASA que representa Id "." Id
+                                                
 					}
 				}
 			}
