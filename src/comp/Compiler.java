@@ -464,7 +464,7 @@ public class Compiler {
 			 * AssignExprLocalDec ::= Expression [ ``$=$'' Expression ]
 			 */
                         
-			expr();
+			Expr e = expr();
 			if ( lexer.token == Symbol.ASSIGN ) {
 				lexer.nextToken();
 				expr();
