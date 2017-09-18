@@ -257,11 +257,11 @@ public class Compiler {
 		if ( lexer.token != Symbol.LEFTCURBRACKET ) signalError.showError("{ expected");
 
 		lexer.nextToken();
-               curClass.push(className);
+                curClass.push(classe);
                 ArrayList<Statement> stmts = statementList();
 
                 // Iterates over statements
-                Boolean haveReturn = false;
+                Boolean ihaveReturn = false;
                 if (stmts != null) {
                     for (int i = 0; i < stmts.size(); ++i) {
                         // Check if it's a 'return'
