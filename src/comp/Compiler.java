@@ -386,17 +386,17 @@ public class Compiler {
 
 	private ArrayList<Statement> statementList() {
 		// CompStatement ::= "{" { Statement } "}"
-		Symbol tk;
+		ArrayList<Statement> stmts = new ArrayList<>();
+                Symbol tk;
 		// statements always begin with an identifier, if, read, write, ...
 		while ((tk = lexer.token) != Symbol.RIGHTCURBRACKET
 				&& tk != Symbol.ELSE)
-			statement();
-
-                // ARRUMAR AQUI
-                return null;
+			stmts.add(statement());
+                
+                return stmts;
 	}
 
-	private void statement() {
+	private Statement statement() {
 		/*
 		 * Statement ::= Assignment ``;'' | IfStat |WhileStat | MessageSend
 		 *                ``;'' | ReturnStat ``;'' | ReadStat ``;'' | WriteStat ``;'' |
@@ -416,8 +416,7 @@ public class Compiler {
 			assertStatement();
 			break;
 		case RETURN:
-			returnStatement();
-			break;
+			return returnStatement();			
 		case READ:
 			readStatement();
 			break;
@@ -428,8 +427,7 @@ public class Compiler {
 			writelnStatement();
 			break;
 		case IF:
-			ifStatement();
-			break;
+			return ifStatement();			
 		case BREAK:
 			breakStatement();
 			break;
@@ -445,6 +443,8 @@ public class Compiler {
 		default:
 			signalError.showError("Statement expected");
 		}
+                
+                return null;
 	}
 
 	private Statement assertStatement() {
@@ -536,28 +536,33 @@ public class Compiler {
             whileStmt.pop();
 	}
 
-	private void ifStatement() {
+	private IfStatement ifStatement() {
 
 		lexer.nextToken();
 		if ( lexer.token != Symbol.LEFTPAR ) signalError.showError("( expected");
 		lexer.nextToken();
-		expr();
+		Expr e = expr();
 		if ( lexer.token != Symbol.RIGHTPAR ) signalError.showError(") expected");
 		lexer.nextToken();
-		statement();
+		Statement thenStmt = statement();
+                Statement elseStmt = null;
 		if ( lexer.token == Symbol.ELSE ) {
 			lexer.nextToken();
-			statement();
+			elseStmt = statement();
 		}
+                
+                return new IfStatement(e, thenStmt, elseStmt);
 	}
 
-	private void returnStatement() {
+	private ReturnStatement returnStatement() {
 
 		lexer.nextToken();
-		expr();
+		Expr e = expr();
 		if ( lexer.token != Symbol.SEMICOLON )
 			signalError.show(ErrorSignaller.semicolon_expected);
 		lexer.nextToken();
+                
+                return new ReturnStatement(e);
 	}
 
 	private void readStatement() {
