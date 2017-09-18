@@ -224,6 +224,7 @@ public class Compiler {
 		if ( lexer.token != Symbol.SEMICOLON )
 			signalError.show(ErrorSignaller.semicolon_expected);
 		lexer.nextToken();
+                
 	}
 
 	private void methodDec(Type type, String name, Symbol qualifier) {
@@ -245,10 +246,13 @@ public class Compiler {
                 }
 
 		lexer.nextToken();
-		if ( lexer.token != Symbol.RIGHTPAR ) formalParamDec();
-                 /*
-                if (isProgramRun == true && formalParamDec() != null){
-                    signalError.showError("Method '" +  name + "' of class '" + classe + "' cannot take parameters");
+                ParamList params = null;
+		if ( lexer.token != Symbol.RIGHTPAR ) 
+                    params = formalParamDec();
+                
+                /*
+                if (isProgramRun == true && params.getSize() == 0){
+                 //   signalError.showError("Method '" +  name + "' of class '" + classe + "' cannot take parameters");
 
                 }*/
 		if ( lexer.token != Symbol.RIGHTPAR ) signalError.showError(") expected");
@@ -258,7 +262,8 @@ public class Compiler {
 
 		lexer.nextToken();
                 curClass.push(classe);
-                ArrayList<Statement> stmts = statementList();
+                statementList();
+                /*ArrayList<Statement> stmts = statementList();
 
                 // Iterates over statements
                 Boolean haveReturn = false;
@@ -277,7 +282,7 @@ public class Compiler {
                 // Check if 'return' is missing
                 if (!haveReturn && !"void".equals(type.getName()))
                     signalError.showError("Missing 'return' statement in method '" + name + "'");
-
+            */
 		if ( lexer.token != Symbol.RIGHTCURBRACKET ) signalError.showError("} expected");
 
 		lexer.nextToken();
@@ -322,17 +327,18 @@ public class Compiler {
 		}
 	}
 
-	private void formalParamDec() {
+	private ParamList formalParamDec() {
 		// FormalParamDec ::= ParamDec { "," ParamDec }
-
-		paramDec();
+                ParamList paramsDec = new ParamList();
+		paramsDec.addElement(paramDec());
 		while (lexer.token == Symbol.COMMA) {
 			lexer.nextToken();
-			paramDec();
+			paramsDec.addElement(paramDec());
 		}
+                return paramsDec;
 	}
 
-	private void paramDec() {
+	private Variable paramDec() {
 		// ParamDec ::= Type Id
 
 		Type t = type();
@@ -341,6 +347,8 @@ public class Compiler {
                 symbolTable.putInLocal(v.getName(), v);
 
 		lexer.nextToken();
+                
+                return new Parameter(v.getName(), v.getType());
 	}
 
 	private Type type() {
