@@ -3,14 +3,11 @@
     <editor-bookmarks xmlns="http://www.netbeans.org/ns/editor-bookmarks/2" lastBookmarkId="0"/>
     <open-files xmlns="http://www.netbeans.org/ns/projectui-open-files/2">
         <group>
-            <file>file:/C:/Users/Asus/Documents/NetBeansProjects/LabCompila/src/ast/TypeIdent.java</file>
             <file>file:/C:/Users/Asus/Documents/NetBeansProjects/LabCompila/src/lexer/Symbol.java</file>
-            <file>file:/C:/Users/Asus/Documents/NetBeansProjects/LabCompila/src/comp/CompilerOptions.java</file>
+            <file>file:/C:/Users/Asus/Documents/NetBeansProjects/LabCompila/src/comp/ErrorSignaller.java</file>
             <file>file:/C:/Users/Asus/Documents/NetBeansProjects/LabCompila/src/comp/SymbolTable.java</file>
             <file>file:/C:/Users/Asus/Documents/NetBeansProjects/LabCompila/src/ast/CompositeExpr.java</file>
-            <file>file:/C:/Users/Asus/Documents/NetBeansProjects/LabCompila/src/ast/Type.java</file>
             <file>file:/C:/Users/Asus/Documents/NetBeansProjects/LabCompila/src/lexer/Lexer.java</file>
-            <file>file:/C:/Users/Asus/Documents/NetBeansProjects/LabCompila/src/ast/TypeUndefined.java</file>
             <file>file:/C:/Users/Asus/Documents/NetBeansProjects/LabCompila/src/comp/Compiler.java</file>
         </group>
     </open-files>
