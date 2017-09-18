@@ -247,7 +247,25 @@ public class Compiler {
 		if ( lexer.token != Symbol.LEFTCURBRACKET ) signalError.showError("{ expected");
 
 		lexer.nextToken();
-		statementList();
+               
+                ArrayList<Statement> stmts = statementList();
+                                                
+                // Iterates over statements
+                Boolean haveReturn = false;
+                for (int i = 0; i < stmts.size(); ++i) {
+                    // Check if it's a 'return'
+                    if ("ReturnStatement".equals(stmts.get(i).getClass().getSimpleName())) {
+                        haveReturn = true;
+                        ReturnStatement returnStmt = (ReturnStatement) stmts.get(i);
+                        if (returnStmt.getExpr() == null || 
+                            (returnStmt.getExpr() != null && !returnStmt.getExpr().getType().getName().equals(type.getName())))
+                                signalError.showError("Illegal 'return' statement. Method returns '" + type.getName() + "'");                        
+                    }
+                }                
+                // Check if 'return' is missing
+                if (!haveReturn && !"void".equals(type.getName()))
+                    signalError.showError("Missing 'return' statement in method '" + name + "'");
+                                    
 		if ( lexer.token != Symbol.RIGHTCURBRACKET ) signalError.showError("} expected");
 
 		lexer.nextToken();
@@ -352,13 +370,16 @@ public class Compiler {
 			lexer.nextToken();
 	}
 
-	private void statementList() {
+	private ArrayList<Statement> statementList() {
 		// CompStatement ::= "{" { Statement } "}"
 		Symbol tk;
 		// statements always begin with an identifier, if, read, write, ...
 		while ((tk = lexer.token) != Symbol.RIGHTCURBRACKET
 				&& tk != Symbol.ELSE)
 			statement();
+                
+                // ARRUMAR AQUI
+                return null;
 	}
 
 	private void statement() {
