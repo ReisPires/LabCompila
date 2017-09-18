@@ -11,11 +11,27 @@ public class KraClass extends Type {
    public String getCname() {
       return getName();
    }
+
+    public KraClass getSuperclass() {
+        return superclass;
+    }
+
+    public void setSuperclass(KraClass superclass) {
+        this.superclass = superclass;
+    }
+
+    public InstanceVariableList getInstanceVariableList() {
+        return instanceVariableList;
+    }
+
+    public void setInstanceVariableList(InstanceVariableList instanceVariableList) {
+        this.instanceVariableList = instanceVariableList;
+    }
    
    private String name;
    private KraClass superclass;
    private InstanceVariableList instanceVariableList;
    // private MethodList publicMethodList, privateMethodList;
-   // métodos públicos get e set para obter e iniciar as variáveis acima,
-   // entre outros métodos
+   // mï¿½todos pï¿½blicos get e set para obter e iniciar as variï¿½veis acima,
+   // entre outros mï¿½todos
 }

@@ -143,7 +143,16 @@ public class Compiler {
 			if ( lexer.token != Symbol.IDENT )
 				signalError.show(ErrorSignaller.ident_expected);
 			String superclassName = lexer.getStringValue();
-
+                        
+                        KraClass superClass = symbolTable.getInGlobal(superclassName);
+                        if (superClass == null){
+                            System.out.println("Erro");
+                        }
+                        else{
+                            KraClass aClass = symbolTable.getInGlobal(className);
+                            aClass.setSuperclass(superClass);
+                        }    
+                       
 			lexer.nextToken();
 		}
 		if ( lexer.token != Symbol.LEFTCURBRACKET )
@@ -198,6 +207,7 @@ public class Compiler {
 		if ( lexer.token != Symbol.RIGHTCURBRACKET )
 			signalError.showError("public/private or \"}\" expected");
 		lexer.nextToken();
+                
                 curClass.pop();
 	}
 
@@ -247,12 +257,15 @@ public class Compiler {
 		if ( lexer.token != Symbol.LEFTCURBRACKET ) signalError.showError("{ expected");
 
 		lexer.nextToken();
+                curClass.push(classe);
 		statementList();
 		if ( lexer.token != Symbol.RIGHTCURBRACKET ) signalError.showError("} expected");
 
 		lexer.nextToken();
-                curClass.push(classe);
+                
+                
                 symbolTable.removeLocalIdent();
+                
 	}
 
 	private void localDec() {
@@ -677,7 +690,7 @@ public class Compiler {
 	 *                 "this" "." Id "." Id "(" [ ExpressionList ] ")"
 	 */
 	private Expr factor() {
-
+            
 		Expr anExpr;
 		ExprList exprList;
 		String messageName, id;
@@ -759,6 +772,13 @@ public class Compiler {
 			 */
 		case SUPER:
 			// "super" "." Id "(" [ ExpressionList ] ")"
+                        String bClass = (String) curClass.pop();
+                        KraClass kraClass =  symbolTable.getInGlobal(bClass);
+                        curClass.push(bClass);
+                        
+                        if (kraClass.getSuperclass() == null){
+                            signalError.showError("'super' used in class '" + bClass + "' that does not have a superclass");
+                        }
 			lexer.nextToken();
 			if ( lexer.token != Symbol.DOT ) {
 				signalError.showError("'.' expected");
@@ -768,6 +788,7 @@ public class Compiler {
 			if ( lexer.token != Symbol.IDENT )
 				signalError.showError("Identifier expected");
 			messageName = lexer.getStringValue();
+                        
 			/*
 			 * para fazer as confer�ncias sem�nticas, procure por 'messageName'
 			 * na superclasse/superclasse da superclasse etc
@@ -866,7 +887,15 @@ public class Compiler {
                                      * 'ident' e que pode tomar os par�metros de ExpressionList
                                      */
                                     Variable var = symbolTable.getInLocal(id);
-
+                                   
+                                    if (var == null){
+                                       String cClass = (String) curClass.pop();
+                                       KraClass kClass =  symbolTable.getInGlobal(cClass);
+                                       curClass.push(cClass);
+                                       if (kClass.getSuperclass() == null){
+                                           System.out.println("Method '" + id  +"' was not found in class '" + cClass + "' or its superclasses" );
+                                       }
+                                    }
 					exprList = this.realParameters();
 				}
 				else if ( lexer.token == Symbol.DOT ) {
