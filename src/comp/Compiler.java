@@ -261,7 +261,7 @@ public class Compiler {
                 ArrayList<Statement> stmts = statementList();
 
                 // Iterates over statements
-                Boolean ihaveReturn = false;
+                
                 if (stmts != null) {
                     for (int i = 0; i < stmts.size(); ++i) {
                         // Check if it's a 'return'
