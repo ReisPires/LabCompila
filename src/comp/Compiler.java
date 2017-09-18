@@ -252,16 +252,18 @@ public class Compiler {
                                                 
                 // Iterates over statements
                 Boolean haveReturn = false;
-                for (int i = 0; i < stmts.size(); ++i) {
-                    // Check if it's a 'return'
-                    if ("ReturnStatement".equals(stmts.get(i).getClass().getSimpleName())) {
-                        haveReturn = true;
-                        ReturnStatement returnStmt = (ReturnStatement) stmts.get(i);
-                        if (returnStmt.getExpr() == null || 
-                            (returnStmt.getExpr() != null && !returnStmt.getExpr().getType().getName().equals(type.getName())))
-                                signalError.showError("Illegal 'return' statement. Method returns '" + type.getName() + "'");                        
-                    }
-                }                
+                if (stmts != null) {
+                    for (int i = 0; i < stmts.size(); ++i) {
+                        // Check if it's a 'return'
+                        if ("ReturnStatement".equals(stmts.get(i).getClass().getSimpleName())) {
+                            haveReturn = true;
+                            ReturnStatement returnStmt = (ReturnStatement) stmts.get(i);
+                            if (returnStmt.getExpr() == null || 
+                                (returnStmt.getExpr() != null && !returnStmt.getExpr().getType().getName().equals(type.getName())))
+                                    signalError.showError("Illegal 'return' statement. Method returns '" + type.getName() + "'");                        
+                        }
+                    }                
+                }
                 // Check if 'return' is missing
                 if (!haveReturn && !"void".equals(type.getName()))
                     signalError.showError("Missing 'return' statement in method '" + name + "'");
