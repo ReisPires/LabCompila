@@ -27,6 +27,7 @@ public class KraClass extends Type {
     public void setInstanceVariableList(InstanceVariableList instanceVariableList) {
         this.instanceVariableList = instanceVariableList;
     }
+
    
    private String name;
    private KraClass superclass;

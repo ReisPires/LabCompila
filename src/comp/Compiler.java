@@ -158,7 +158,7 @@ public class Compiler {
 		if ( lexer.token != Symbol.LEFTCURBRACKET )
 			signalError.showError("{ expected", true);
 		lexer.nextToken();
-
+                
 		while (lexer.token == Symbol.PRIVATE || lexer.token == Symbol.PUBLIC) {
 
 			Symbol qualifier;
@@ -192,22 +192,27 @@ public class Compiler {
                             isRun = true;
                         }
 			lexer.nextToken();
-			if ( lexer.token == Symbol.LEFTPAR )
-
+                        
+			if ( lexer.token == Symbol.LEFTPAR ){
+                            
 				methodDec(t, name, qualifier);
+                                
+                        }
 			else if ( qualifier != Symbol.PRIVATE )
 				signalError.showError("Attempt to declare a public instance variable");
 			else
 				instanceVarDec(t, name);
+                        
 		}
 
                 if ((className.compareTo("Program") == 0) && isRun == false ){
                     signalError.showError("Method 'run' was not found in class 'Program");
                 }
+                
 		if ( lexer.token != Symbol.RIGHTCURBRACKET )
 			signalError.showError("public/private or \"}\" expected");
 		lexer.nextToken();
-
+                
                 curClass.pop();
 	}
 
@@ -231,6 +236,7 @@ public class Compiler {
 		 * MethodDec ::= Qualifier Return Id "("[ FormalParamDec ] ")" "{"
 		 *                StatementList "}"
 		 */
+                
                 String classe;
                 boolean isProgramRun = false;
                 if( (classe = (String) curClass.pop()).compareTo("Program") == 0 && name.compareTo("run") == 0){
@@ -245,6 +251,7 @@ public class Compiler {
                 }
 
 		lexer.nextToken();
+                
 		if ( lexer.token != Symbol.RIGHTPAR ) formalParamDec();
                  /*
                 if (isProgramRun == true && formalParamDec() != null){
@@ -257,9 +264,11 @@ public class Compiler {
 		if ( lexer.token != Symbol.LEFTCURBRACKET ) signalError.showError("{ expected");
 
 		lexer.nextToken();
-               curClass.push(className);
-                ArrayList<Statement> stmts = statementList();
-
+                
+                curClass.push(classe);
+                statementList();
+                /*ArrayList<Statement> stmts = statementList();
+                
                 // Iterates over statements
                 Boolean haveReturn = false;
                 for (int i = 0; i < stmts.size(); ++i) {
@@ -272,15 +281,15 @@ public class Compiler {
                                 signalError.showError("Illegal 'return' statement. Method returns '" + type.getName() + "'");
                     }
                 }
+                
                 // Check if 'return' is missing
                 if (!haveReturn && !"void".equals(type.getName()))
                     signalError.showError("Missing 'return' statement in method '" + name + "'");
-
+                */
 		if ( lexer.token != Symbol.RIGHTCURBRACKET ) signalError.showError("} expected");
 
 		lexer.nextToken();
-
-
+                
                 symbolTable.removeLocalIdent();
 
 	}
@@ -795,8 +804,8 @@ public class Compiler {
                         String bClass = (String) curClass.pop();
                         KraClass kraClass =  symbolTable.getInGlobal(bClass);
                         curClass.push(bClass);
-
-                        if (kraClass.getSuperclass() == null){
+                        
+                        if (kraClass.getSuperclass()== null){
                             signalError.showError("'super' used in class '" + bClass + "' that does not have a superclass");
                         }
 			lexer.nextToken();
