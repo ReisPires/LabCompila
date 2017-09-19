@@ -246,15 +246,17 @@ public class Compiler {
                 }
 
 		lexer.nextToken();
-                ParamList params = null;
-		if ( lexer.token != Symbol.RIGHTPAR ) 
-                    params = formalParamDec();
                 
-                /*
-                if (isProgramRun == true && params.getSize() == 0){
-                 //   signalError.showError("Method '" +  name + "' of class '" + classe + "' cannot take parameters");
-
-                }*/
+                ParamList params = null;
+		if ( lexer.token != Symbol.RIGHTPAR ){ 
+                    params = formalParamDec();
+                    
+                    if (isProgramRun == true && params.getSize() != 0){
+                        signalError.showError("Method '" +  name + "' of class '" + classe + "' cannot take parameters");
+                    }
+                }
+                
+                
 		if ( lexer.token != Symbol.RIGHTPAR ) signalError.showError(") expected");
 
 		lexer.nextToken();
