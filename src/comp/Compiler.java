@@ -245,6 +245,30 @@ public class Compiler {
                     isProgramRun = true;
                 }
 
+                /* Setar os metodos */
+                KraClass cClass = symbolTable.getInGlobal(classe);
+                
+                Variable var = new Variable(name, type, qualifier.toString());
+                
+                ArrayList<Variable> methods = cClass.getMethodList();
+                
+                if(methods.size() == 0){
+                    methods.add(var);
+                }
+                else{
+                    for(Variable v : methods){
+                        
+                        if (v.getName().compareTo(var.getName()) != 0){
+                             methods.add(var);
+                             break;
+                        }
+                        else{
+                            signalError.showError("Method '" + name + "' is being redefined");
+                            break;
+                        }
+                    }
+                }   
+    
 		lexer.nextToken();
                 
                 ParamList params = null;
@@ -509,10 +533,12 @@ public class Compiler {
 			 * AssignExprLocalDec ::= Expression [ ``$=$'' Expression ]
 			 */
 
-			Expr e = expr();
+			Expr expr1 = expr();
+                        
 			if ( lexer.token == Symbol.ASSIGN ) {
 				lexer.nextToken();
-				expr();
+				Expr expr2 = expr();
+                                
 				if ( lexer.token != Symbol.SEMICOLON )
 					signalError.showError("';' expected", true);
 				else
@@ -610,8 +636,16 @@ public class Compiler {
 		if ( lexer.token != Symbol.LEFTPAR ) signalError.showError("( expected");
 		lexer.nextToken();
                 ExprList exprList = exprList();
-
-
+                ArrayList<Expr> arrayExpr = new ArrayList<Expr>();
+                arrayExpr = exprList.getExpr();
+                
+                for(Expr e : arrayExpr){
+                   
+                    if (e.getType() instanceof KraClass){
+                        System.out.print("é classe");
+                    }
+                }
+                
 		if ( lexer.token != Symbol.RIGHTPAR ) signalError.showError(") expected");
 		lexer.nextToken();
 		if ( lexer.token != Symbol.SEMICOLON )
@@ -731,7 +765,9 @@ public class Compiler {
 		Expr anExpr;
 		ExprList exprList;
 		String messageName, id;
-
+                String bClass;
+                KraClass kraClass;
+                
 		switch (lexer.token) {
 		// IntValue
 		case LITERALINT:
@@ -809,8 +845,8 @@ public class Compiler {
 			 */
 		case SUPER:
 			// "super" "." Id "(" [ ExpressionList ] ")"
-                        String bClass = (String) curClass.pop();
-                        KraClass kraClass =  symbolTable.getInGlobal(bClass);
+                        bClass = (String) curClass.pop();
+                        kraClass =  symbolTable.getInGlobal(bClass);
                         curClass.push(bClass);
 
                         if (kraClass.getSuperclass() == null){
@@ -843,7 +879,7 @@ public class Compiler {
 			 */
 
 			String firstId = lexer.getStringValue();
-
+                        
 			lexer.nextToken();
 			if ( lexer.token != Symbol.DOT ) {
 				// Id
@@ -851,9 +887,11 @@ public class Compiler {
                                 if(symbolTable.getInLocal(firstId) == null){
                                    signalError.showError("Identifier '" + firstId + "' was not found");
                                 }
+                                
 				return null;
 			}
 			else { // Id "."
+                            
 				lexer.nextToken(); // coma o "."
 				if ( lexer.token != Symbol.IDENT ) {
 					signalError.showError("Identifier expected");
@@ -862,6 +900,7 @@ public class Compiler {
 					// Id "." Id
 					lexer.nextToken();
 					id = lexer.getStringValue();
+                                        
 					if ( lexer.token == Symbol.DOT ) {
 						// Id "." Id "." Id "(" [ ExpressionList ] ")"
 						/*
@@ -871,6 +910,7 @@ public class Compiler {
 						 * Contudo, se vari�veis est�ticas n�o estiver nas especifica��es,
 						 * sinalize um erro neste ponto.
 						 */
+
 						lexer.nextToken();
 						if ( lexer.token != Symbol.IDENT )
 							signalError.showError("Identifier expected");
@@ -886,10 +926,12 @@ public class Compiler {
 						 * para fazer as confer�ncias sem�nticas, procure por
 						 * m�todo 'ident' na classe de 'firstId'
 						 */
+                                             
+                                              
 					}
 					else {
 						// retorne o objeto da ASA que representa Id "." Id
-
+                                                
 					}
 				}
 			}
