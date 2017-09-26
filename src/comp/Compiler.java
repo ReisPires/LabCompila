@@ -615,6 +615,10 @@ public class Compiler {
 				signalError.show(ErrorSignaller.ident_expected);
 
 			String name = lexer.getStringValue();
+                        Variable v = symbolTable.getInLocal(name);
+                        if (v.getType() instanceof TypeBoolean){
+                            signalError.showError("Command 'read' does not accept 'boolean' variables");
+                        }
 			lexer.nextToken();
 			if ( lexer.token == Symbol.COMMA )
 				lexer.nextToken();
@@ -868,6 +872,9 @@ public class Compiler {
 			 */
 			lexer.nextToken();
 			exprList = realParameters();
+                        
+                        /*Guardar tipo da classe???*/
+                    //    return PrimaryExpr(true, );
 			break;
 		case IDENT:
 			/*
@@ -882,16 +889,17 @@ public class Compiler {
                         
 			lexer.nextToken();
 			if ( lexer.token != Symbol.DOT ) {
-				// Id
-				// retorne um objeto da ASA que representa um identificador
-                                if(symbolTable.getInLocal(firstId) == null){
+                            // Id
+                            // retorne um objeto da ASA que representa um identificador
+                                Variable variable = symbolTable.getInLocal(firstId);
+                                if(variable == null){
                                    signalError.showError("Identifier '" + firstId + "' was not found");
                                 }
-                                
-				return null;
+
+				return new PrimaryExpr(variable.getName(), variable.getType());
 			}
 			else { // Id "."
-                            
+                                
 				lexer.nextToken(); // coma o "."
 				if ( lexer.token != Symbol.IDENT ) {
 					signalError.showError("Identifier expected");
@@ -950,6 +958,8 @@ public class Compiler {
 				// only 'this'
 				// retorne um objeto da ASA que representa 'this'
 				// confira se n�o estamos em um m�todo est�tico
+                                /*Retorna apenas um this*/
+                                //return PrimaryExpr("
 				return null;
 			}
 			else {
