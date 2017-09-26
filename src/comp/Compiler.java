@@ -187,7 +187,7 @@ public class Compiler {
 			if ( lexer.token != Symbol.IDENT )
 				signalError.showError("Identifier expected");
 			String name = lexer.getStringValue();
-
+                        
                         if (name.compareTo("run") == 0){
                             isRun = true;
                         }
@@ -213,12 +213,13 @@ public class Compiler {
 
 	private void instanceVarDec(Type type, String name) {
 		// InstVarDec ::= [ "static" ] "private" Type IdList ";"
-
+                
 		while (lexer.token == Symbol.COMMA) {
 			lexer.nextToken();
 			if ( lexer.token != Symbol.IDENT )
 				signalError.showError("Identifier expected");
 			String variableName = lexer.getStringValue();
+                        
 			lexer.nextToken();
 		}
 		if ( lexer.token != Symbol.SEMICOLON )
@@ -324,7 +325,7 @@ public class Compiler {
 		Type type = type();
 		if ( lexer.token != Symbol.IDENT ) signalError.showError("Identifier expected");
 		Variable v = new Variable(lexer.getStringValue(), type);
-
+                
                 if(symbolTable.getInLocal(v.getName()) != null){
                     signalError.showError("Variable '" + v.getName() + "' is being redeclared", true);
                 } else{
@@ -342,7 +343,7 @@ public class Compiler {
 			if ( lexer.token != Symbol.IDENT )
 				signalError.showError("Identifier expected");
 			v = new Variable(lexer.getStringValue(), type);
-
+                        
                         if(symbolTable.getInLocal(v.getName()) != null){
                             signalError.showError("Variable '" + v.getName() + "'is being redeclared");
                         } else{
@@ -539,6 +540,13 @@ public class Compiler {
 				lexer.nextToken();
 				Expr expr2 = expr();
                                 
+                                /* Verificar os tipos básicos */
+                                if ((expr1.getType() instanceof TypeInt) || (expr1.getType() instanceof TypeBoolean)){
+                                    if(expr2 instanceof NullExpr){
+                                        signalError.showError("Type error: 'null' cannot be assigned to a variable of a basic type");
+                                    }
+                                }
+                                
 				if ( lexer.token != Symbol.SEMICOLON )
 					signalError.showError("';' expected", true);
 				else
@@ -708,6 +716,7 @@ public class Compiler {
 			Expr right = simpleExpr();
 			left = new CompositeExpr(left, op, right);
 		}
+                
 		return left;
 	}
 
@@ -739,11 +748,14 @@ public class Compiler {
 
 	private Expr signalFactor() {
 		Symbol op;
+               
 		if ( (op = lexer.token) == Symbol.PLUS || op == Symbol.MINUS ) {
 			lexer.nextToken();
 			return new SignalExpr(op, factor());
 		}
 		else
+                       
+                        
 			return factor();
 	}
 
@@ -800,6 +812,7 @@ public class Compiler {
 			// "null"
 		case NULL:
 			lexer.nextToken();
+                        
 			return new NullExpr();
 			// "!" Factor
 		case NOT:
@@ -895,7 +908,7 @@ public class Compiler {
                                 if(variable == null){
                                    signalError.showError("Identifier '" + firstId + "' was not found");
                                 }
-
+                                   
 				return new PrimaryExpr(variable.getName(), variable.getType());
 			}
 			else { // Id "."

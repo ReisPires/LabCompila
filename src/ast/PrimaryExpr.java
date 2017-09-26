@@ -16,7 +16,7 @@ public class PrimaryExpr extends Expr{
 
     @Override
     public Type getType() {
-        return null;
+        return this.type;
     }
     
     private String name;
