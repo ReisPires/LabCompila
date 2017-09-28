@@ -33,7 +33,9 @@ public class Compiler {
 			while ( lexer.token == Symbol.MOCall ) {
 				metaobjectCallList.add(metaobjectCall());
 			}
+                        
 			classDec();
+                       
 			while ( lexer.token == Symbol.CLASS )
 				classDec();
 
@@ -132,8 +134,8 @@ public class Compiler {
 		if ( lexer.token != Symbol.IDENT )
 			signalError.show(ErrorSignaller.ident_expected);
 		String className = lexer.getStringValue();
-
-
+                
+                
 		symbolTable.putInGlobal(className, new KraClass(className));
                 curClass.push(className);
 
@@ -193,7 +195,6 @@ public class Compiler {
                         }
 			lexer.nextToken();
 			if ( lexer.token == Symbol.LEFTPAR )
-
 				methodDec(t, name, qualifier);
 			else if ( qualifier != Symbol.PRIVATE )
 				signalError.showError("Attempt to declare a public instance variable");
@@ -254,9 +255,10 @@ public class Compiler {
                 ArrayList<Variable> methods = cClass.getMethodList();
                 
                 if(methods.size() == 0){
-                    methods.add(var);
+                    methods.add(var);                 
                 }
                 else{
+                    
                     for(Variable v : methods){
                         
                         if (v.getName().compareTo(var.getName()) != 0){
@@ -310,10 +312,11 @@ public class Compiler {
                 if (!haveReturn && !"void".equals(type.getName()))
                     signalError.showError("Missing 'return' statement in method '" + name + "'");
             */
+                
 		if ( lexer.token != Symbol.RIGHTCURBRACKET ) signalError.showError("} expected");
 
 		lexer.nextToken();
-
+                
 
                 symbolTable.removeLocalIdent();
 
@@ -652,7 +655,7 @@ public class Compiler {
                 arrayExpr = exprList.getExpr();
                 
                 for(Expr e : arrayExpr){
-                   
+                  
                     if (e.getType() instanceof KraClass){
                         System.out.print("é classe");
                     }
@@ -993,9 +996,16 @@ public class Compiler {
                                     if (var == null){
                                        String cClass = (String) curClass.pop();
                                        KraClass kClass =  symbolTable.getInGlobal(cClass);
+                                       Boolean haveMethod = false;
+                                       for(Variable v : kClass.getMethodList()){
+                                           if(v.getName().compareTo(id) == 0){
+                                               haveMethod = true;
+                                           }
+                                       }
+                                       
                                        curClass.push(cClass);
-                                       if (kClass.getSuperclass() == null){
-                                           System.out.println("Method '" + id  +"' was not found in class '" + cClass + "' or its superclasses" );
+                                       if (haveMethod == false && kClass.getSuperclass() == null){
+                                           signalError.showError("Method '" + id  +"' was not found in class '" + cClass + "' or its superclasses" );
                                        }
                                     }
 					exprList = this.realParameters();
