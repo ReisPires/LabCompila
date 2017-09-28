@@ -401,8 +401,12 @@ public class Compiler {
 			break;
 		case IDENT:
 			// # corrija: fa�a uma busca na TS para buscar a classe
-			// IDENT deve ser uma classe.
-			result = Type.identType;
+			// IDENT deve ser uma classe. (No sentido de criar uma classe ou classe da ast?
+                        
+                        KraClass classe = symbolTable.getInGlobal(lexer.getStringValue());
+                        
+			result = classe;
+                        
 			break;
 		default:
 			signalError.showError("Type expected");
@@ -848,8 +852,8 @@ public class Compiler {
 			 * return an object representing the creation of an object
 			 */
                         if( aClass != null){
-
-                           // return new
+                           
+                            return new NewExpr(aClass);
                         }
 			return null;
 			/*
@@ -922,6 +926,7 @@ public class Compiler {
 				}
 				else {
 					// Id "." Id
+                                        
 					lexer.nextToken();
 					id = lexer.getStringValue();
                                         
@@ -934,8 +939,7 @@ public class Compiler {
 						 * Contudo, se vari�veis est�ticas n�o estiver nas especifica��es,
 						 * sinalize um erro neste ponto.
 						 */
-
-						lexer.nextToken();
+                                                    lexer.nextToken();
 						if ( lexer.token != Symbol.IDENT )
 							signalError.showError("Identifier expected");
 						messageName = lexer.getStringValue();
@@ -944,17 +948,60 @@ public class Compiler {
 
 					}
 					else if ( lexer.token == Symbol.LEFTPAR ) {
+                                            
 						// Id "." Id "(" [ ExpressionList ] ")"
 						exprList = this.realParameters();
 						/*
 						 * para fazer as confer�ncias sem�nticas, procure por
 						 * m�todo 'ident' na classe de 'firstId'
 						 */
-                                             
-                                              
+                                                Variable var = symbolTable.getInLocal(firstId);
+                                                
+                                                if (var != null){
+                                                                                                     
+                                                   KraClass kClass =  symbolTable.getInGlobal(var.getType().getCname());
+                                                   
+                                                   
+                                                   Boolean haveMethod = false;
+                                                   for(Variable v : kClass.getMethodList()){
+                                                       if(v.getName().compareTo(id) == 0){
+                                                           haveMethod = true;
+                                                       }
+                                                   }
+                                                   
+                                                   System.out.println("Em Factor verificar parametros do metodo, se ele existir. E tambem superclasse");
+                                                   
+                                                   
+                                                   if (haveMethod == false){
+                                                       if(kClass.getSuperclass() == null){
+                                                        signalError.showError("Method '" + id  +"' was not found in class '" + var.getType().getCname() + "' or its superclasses" );
+                                                       }
+                                                       //procurar id nas superclasses
+                                                       else{
+                                                           KraClass superClasses = kClass.getSuperclass();
+                                                           
+                                                           //procurar em todas superclasses
+                                                           do{
+                                                               
+                                                               for(Variable v : superClasses.getMethodList()){
+                                                                   
+                                                                if(v.getName().compareTo(id) == 0){
+                                                                    haveMethod = true;
+                                                                }
+                                                            }
+                                                             superClasses = superClasses.getSuperclass();
+                                                           }while(superClasses != null);
+                                                         
+                                                           if(haveMethod == false){
+                                                               signalError.showError("Method '" + id  +"' was not found in class '" + var.getType().getCname() + "' or its superclasses" );
+                                                           }
+                                                       }
+                                                   }
+                                                }
 					}
 					else {
 						// retorne o objeto da ASA que representa Id "." Id
+                                                
                                                 
 					}
 				}
