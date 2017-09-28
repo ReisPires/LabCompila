@@ -33,7 +33,9 @@ public class Compiler {
 			while ( lexer.token == Symbol.MOCall ) {
 				metaobjectCallList.add(metaobjectCall());
 			}
+                        
 			classDec();
+                       
 			while ( lexer.token == Symbol.CLASS )
 				classDec();
 
@@ -132,8 +134,8 @@ public class Compiler {
 		if ( lexer.token != Symbol.IDENT )
 			signalError.show(ErrorSignaller.ident_expected);
 		String className = lexer.getStringValue();
-
-
+                
+                
 		symbolTable.putInGlobal(className, new KraClass(className));
                 curClass.push(className);
 
@@ -187,14 +189,14 @@ public class Compiler {
 			if ( lexer.token != Symbol.IDENT )
 				signalError.showError("Identifier expected");
 			String name = lexer.getStringValue();
-
+                        
                         if (name.compareTo("run") == 0){
                             isRun = true;
                         }
 			lexer.nextToken();
                         
 			if ( lexer.token == Symbol.LEFTPAR ){
-                            
+                           
 				methodDec(t, name, qualifier);
                                 
                         }
@@ -218,17 +220,19 @@ public class Compiler {
 
 	private void instanceVarDec(Type type, String name) {
 		// InstVarDec ::= [ "static" ] "private" Type IdList ";"
-
+                
 		while (lexer.token == Symbol.COMMA) {
 			lexer.nextToken();
 			if ( lexer.token != Symbol.IDENT )
 				signalError.showError("Identifier expected");
 			String variableName = lexer.getStringValue();
+                        
 			lexer.nextToken();
 		}
 		if ( lexer.token != Symbol.SEMICOLON )
 			signalError.show(ErrorSignaller.semicolon_expected);
 		lexer.nextToken();
+                
 	}
 
 	private void methodDec(Type type, String name, Symbol qualifier) {
@@ -250,14 +254,44 @@ public class Compiler {
                     isProgramRun = true;
                 }
 
+                /* Setar os metodos */
+                KraClass cClass = symbolTable.getInGlobal(classe);
+                
+                Variable var = new Variable(name, type, qualifier.toString());
+                
+                ArrayList<Variable> methods = cClass.getMethodList();
+                
+                if(methods.size() == 0){
+                    methods.add(var);                 
+                }
+                else{
+                    
+                    for(Variable v : methods){
+                        
+                        if (v.getName().compareTo(var.getName()) != 0){
+                             methods.add(var);
+                             break;
+                        }
+                        else{
+                            signalError.showError("Method '" + name + "' is being redefined");
+                            break;
+                        }
+                    }
+                }   
+    
 		lexer.nextToken();
                 
-		if ( lexer.token != Symbol.RIGHTPAR ) formalParamDec();
-                 /*
-                if (isProgramRun == true && formalParamDec() != null){
-                    signalError.showError("Method '" +  name + "' of class '" + classe + "' cannot take parameters");
 
-                }*/
+                ParamList params = null;
+		if ( lexer.token != Symbol.RIGHTPAR ){ 
+                    params = formalParamDec();
+                    
+                    if (isProgramRun == true && params.getSize() != 0){
+                        signalError.showError("Method '" +  name + "' of class '" + classe + "' cannot take parameters");
+                    }
+                }
+                
+                
 		if ( lexer.token != Symbol.RIGHTPAR ) signalError.showError(") expected");
 
 		lexer.nextToken();
@@ -266,7 +300,8 @@ public class Compiler {
 		lexer.nextToken();
 
                 curClass.push(classe);
-                ArrayList<Statement> stmts = statementList();
+                statementList();
+                /*ArrayList<Statement> stmts = statementList();
 
                 // Iterates over statements
                 Boolean haveReturn = false;
@@ -286,6 +321,9 @@ public class Compiler {
                 // Check if 'return' is missing
                 if (!haveReturn && !"void".equals(type.getName()))
                     signalError.showError("Missing 'return' statement in method '" + name + "'");
+
+            */
+
                 
 		if ( lexer.token != Symbol.RIGHTCURBRACKET ) signalError.showError("} expected");
 
@@ -301,7 +339,7 @@ public class Compiler {
 		Type type = type();
 		if ( lexer.token != Symbol.IDENT ) signalError.showError("Identifier expected");
 		Variable v = new Variable(lexer.getStringValue(), type);
-
+                
                 if(symbolTable.getInLocal(v.getName()) != null){
                     signalError.showError("Variable '" + v.getName() + "' is being redeclared", true);
                 } else{
@@ -319,7 +357,7 @@ public class Compiler {
 			if ( lexer.token != Symbol.IDENT )
 				signalError.showError("Identifier expected");
 			v = new Variable(lexer.getStringValue(), type);
-
+                        
                         if(symbolTable.getInLocal(v.getName()) != null){
                             signalError.showError("Variable '" + v.getName() + "'is being redeclared");
                         } else{
@@ -330,17 +368,18 @@ public class Compiler {
 		}
 	}
 
-	private void formalParamDec() {
+	private ParamList formalParamDec() {
 		// FormalParamDec ::= ParamDec { "," ParamDec }
-
-		paramDec();
+                ParamList paramsDec = new ParamList();
+		paramsDec.addElement(paramDec());
 		while (lexer.token == Symbol.COMMA) {
 			lexer.nextToken();
-			paramDec();
+			paramsDec.addElement(paramDec());
 		}
+                return paramsDec;
 	}
 
-	private void paramDec() {
+	private Variable paramDec() {
 		// ParamDec ::= Type Id
 
 		Type t = type();
@@ -349,6 +388,8 @@ public class Compiler {
                 symbolTable.putInLocal(v.getName(), v);
 
 		lexer.nextToken();
+                
+                return new Parameter(v.getName(), v.getType());
 	}
 
 	private Type type() {
@@ -371,8 +412,12 @@ public class Compiler {
 			break;
 		case IDENT:
 			// # corrija: fa�a uma busca na TS para buscar a classe
-			// IDENT deve ser uma classe.
-			result = Type.identType;
+			// IDENT deve ser uma classe. (No sentido de criar uma classe ou classe da ast?
+                        
+                        KraClass classe = symbolTable.getInGlobal(lexer.getStringValue());
+                        
+			result = classe;
+                        
 			break;
 		default:
 			signalError.showError("Type expected");
@@ -507,10 +552,19 @@ public class Compiler {
 			 * AssignExprLocalDec ::= Expression [ ``$=$'' Expression ]
 			 */
 
-			Expr e = expr();
+			Expr expr1 = expr();
+                        
 			if ( lexer.token == Symbol.ASSIGN ) {
 				lexer.nextToken();
-				expr();
+				Expr expr2 = expr();
+                                
+                                /* Verificar os tipos básicos */
+                                if ((expr1.getType() instanceof TypeInt) || (expr1.getType() instanceof TypeBoolean)){
+                                    if(expr2 instanceof NullExpr){
+                                        signalError.showError("Type error: 'null' cannot be assigned to a variable of a basic type");
+                                    }
+                                }
+                                
 				if ( lexer.token != Symbol.SEMICOLON )
 					signalError.showError("';' expected", true);
 				else
@@ -587,6 +641,10 @@ public class Compiler {
 				signalError.show(ErrorSignaller.ident_expected);
 
 			String name = lexer.getStringValue();
+                        Variable v = symbolTable.getInLocal(name);
+                        if (v.getType() instanceof TypeBoolean){
+                            signalError.showError("Command 'read' does not accept 'boolean' variables");
+                        }
 			lexer.nextToken();
 			if ( lexer.token == Symbol.COMMA )
 				lexer.nextToken();
@@ -608,8 +666,16 @@ public class Compiler {
 		if ( lexer.token != Symbol.LEFTPAR ) signalError.showError("( expected");
 		lexer.nextToken();
                 ExprList exprList = exprList();
-
-
+                ArrayList<Expr> arrayExpr = new ArrayList<Expr>();
+                arrayExpr = exprList.getExpr();
+                
+                for(Expr e : arrayExpr){
+                  
+                    if (e.getType() instanceof KraClass){
+                        System.out.print("é classe");
+                    }
+                }
+                
 		if ( lexer.token != Symbol.RIGHTPAR ) signalError.showError(") expected");
 		lexer.nextToken();
 		if ( lexer.token != Symbol.SEMICOLON )
@@ -668,6 +734,7 @@ public class Compiler {
 			Expr right = simpleExpr();
 			left = new CompositeExpr(left, op, right);
 		}
+                
 		return left;
 	}
 
@@ -699,11 +766,14 @@ public class Compiler {
 
 	private Expr signalFactor() {
 		Symbol op;
+               
 		if ( (op = lexer.token) == Symbol.PLUS || op == Symbol.MINUS ) {
 			lexer.nextToken();
 			return new SignalExpr(op, factor());
 		}
 		else
+                       
+                        
 			return factor();
 	}
 
@@ -729,7 +799,9 @@ public class Compiler {
 		Expr anExpr;
 		ExprList exprList;
 		String messageName, id;
-
+                String bClass;
+                KraClass kraClass;
+                
 		switch (lexer.token) {
 		// IntValue
 		case LITERALINT:
@@ -758,6 +830,7 @@ public class Compiler {
 			// "null"
 		case NULL:
 			lexer.nextToken();
+                        
 			return new NullExpr();
 			// "!" Factor
 		case NOT:
@@ -790,8 +863,8 @@ public class Compiler {
 			 * return an object representing the creation of an object
 			 */
                         if( aClass != null){
-
-                           // return new
+                           
+                            return new NewExpr(aClass);
                         }
 			return null;
 			/*
@@ -807,8 +880,8 @@ public class Compiler {
 			 */
 		case SUPER:
 			// "super" "." Id "(" [ ExpressionList ] ")"
-                        String bClass = (String) curClass.pop();
-                        KraClass kraClass =  symbolTable.getInGlobal(bClass);
+                        bClass = (String) curClass.pop();
+                        kraClass =  symbolTable.getInGlobal(bClass);
                         curClass.push(bClass);
                         
                         if (kraClass.getSuperclass()== null){
@@ -830,6 +903,9 @@ public class Compiler {
 			 */
 			lexer.nextToken();
 			exprList = realParameters();
+                        
+                        /*Guardar tipo da classe???*/
+                    //    return PrimaryExpr(true, );
 			break;
 		case IDENT:
 			/*
@@ -841,25 +917,30 @@ public class Compiler {
 			 */
 
 			String firstId = lexer.getStringValue();
-
+                        
 			lexer.nextToken();
 			if ( lexer.token != Symbol.DOT ) {
-				// Id
-				// retorne um objeto da ASA que representa um identificador
-                                if(symbolTable.getInLocal(firstId) == null){
+                            // Id
+                            // retorne um objeto da ASA que representa um identificador
+                                Variable variable = symbolTable.getInLocal(firstId);
+                                if(variable == null){
                                    signalError.showError("Identifier '" + firstId + "' was not found");
                                 }
-				return null;
+                                   
+				return new PrimaryExpr(variable.getName(), variable.getType());
 			}
 			else { // Id "."
+                                
 				lexer.nextToken(); // coma o "."
 				if ( lexer.token != Symbol.IDENT ) {
 					signalError.showError("Identifier expected");
 				}
 				else {
 					// Id "." Id
+                                        
 					lexer.nextToken();
 					id = lexer.getStringValue();
+                                        
 					if ( lexer.token == Symbol.DOT ) {
 						// Id "." Id "." Id "(" [ ExpressionList ] ")"
 						/*
@@ -869,7 +950,7 @@ public class Compiler {
 						 * Contudo, se vari�veis est�ticas n�o estiver nas especifica��es,
 						 * sinalize um erro neste ponto.
 						 */
-						lexer.nextToken();
+                                                    lexer.nextToken();
 						if ( lexer.token != Symbol.IDENT )
 							signalError.showError("Identifier expected");
 						messageName = lexer.getStringValue();
@@ -878,16 +959,61 @@ public class Compiler {
 
 					}
 					else if ( lexer.token == Symbol.LEFTPAR ) {
+                                            
 						// Id "." Id "(" [ ExpressionList ] ")"
 						exprList = this.realParameters();
 						/*
 						 * para fazer as confer�ncias sem�nticas, procure por
 						 * m�todo 'ident' na classe de 'firstId'
 						 */
+                                                Variable var = symbolTable.getInLocal(firstId);
+                                                
+                                                if (var != null){
+                                                                                                     
+                                                   KraClass kClass =  symbolTable.getInGlobal(var.getType().getCname());
+                                                   
+                                                   
+                                                   Boolean haveMethod = false;
+                                                   for(Variable v : kClass.getMethodList()){
+                                                       if(v.getName().compareTo(id) == 0){
+                                                           haveMethod = true;
+                                                       }
+                                                   }
+                                                   
+                                                   System.out.println("Em Factor verificar parametros do metodo, se ele existir. E tambem superclasse");
+                                                   
+                                                   
+                                                   if (haveMethod == false){
+                                                       if(kClass.getSuperclass() == null){
+                                                        signalError.showError("Method '" + id  +"' was not found in class '" + var.getType().getCname() + "' or its superclasses" );
+                                                       }
+                                                       //procurar id nas superclasses
+                                                       else{
+                                                           KraClass superClasses = kClass.getSuperclass();
+                                                           
+                                                           //procurar em todas superclasses
+                                                           do{
+                                                               
+                                                               for(Variable v : superClasses.getMethodList()){
+                                                                   
+                                                                if(v.getName().compareTo(id) == 0){
+                                                                    haveMethod = true;
+                                                                }
+                                                            }
+                                                             superClasses = superClasses.getSuperclass();
+                                                           }while(superClasses != null);
+                                                         
+                                                           if(haveMethod == false){
+                                                               signalError.showError("Method '" + id  +"' was not found in class '" + var.getType().getCname() + "' or its superclasses" );
+                                                           }
+                                                       }
+                                                   }
+                                                }
 					}
 					else {
 						// retorne o objeto da ASA que representa Id "." Id
-
+                                                
+                                                
 					}
 				}
 			}
@@ -906,6 +1032,8 @@ public class Compiler {
 				// only 'this'
 				// retorne um objeto da ASA que representa 'this'
 				// confira se n�o estamos em um m�todo est�tico
+                                /*Retorna apenas um this*/
+                                //return PrimaryExpr("
 				return null;
 			}
 			else {
@@ -926,9 +1054,16 @@ public class Compiler {
                                     if (var == null){
                                        String cClass = (String) curClass.pop();
                                        KraClass kClass =  symbolTable.getInGlobal(cClass);
+                                       Boolean haveMethod = false;
+                                       for(Variable v : kClass.getMethodList()){
+                                           if(v.getName().compareTo(id) == 0){
+                                               haveMethod = true;
+                                           }
+                                       }
+                                       
                                        curClass.push(cClass);
-                                       if (kClass.getSuperclass() == null){
-                                           System.out.println("Method '" + id  +"' was not found in class '" + cClass + "' or its superclasses" );
+                                       if (haveMethod == false && kClass.getSuperclass() == null){
+                                           signalError.showError("Method '" + id  +"' was not found in class '" + cClass + "' or its superclasses" );
                                        }
                                     }
 					exprList = this.realParameters();

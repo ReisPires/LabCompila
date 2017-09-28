@@ -11,7 +11,12 @@ public class ExprList {
     public void addElement( Expr expr ) {
         exprList.add(expr);
     }
-
+    
+    public ArrayList<Expr> getExpr(){
+        
+        return this.exprList;
+    }
+    
     public void genC( PW pw ) {
 
         int size = exprList.size();

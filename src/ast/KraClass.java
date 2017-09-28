@@ -1,4 +1,7 @@
 package ast;
+
+import java.util.ArrayList;
+
 /*
  * Krakatoa Class
  */
@@ -29,10 +32,25 @@ public class KraClass extends Type {
     }
 
    
+    public ArrayList<Variable> getMethodList() {
+        return methodList;
+    }
+
+    public void setMethodList(Variable v) {
+        methodList.add(v);
+    }
+    
+    public int getSize(){
+        return methodList.size();
+    }
+    
    private String name;
    private KraClass superclass;
    private InstanceVariableList instanceVariableList;
+   private ArrayList<Variable> methodList = new ArrayList<Variable>(); 
    // private MethodList publicMethodList, privateMethodList;
    // m�todos p�blicos get e set para obter e iniciar as vari�veis acima,
    // entre outros m�todos
+
+
 }
