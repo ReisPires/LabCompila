@@ -1,7 +1,7 @@
 package ast;
 
-public class ReturnStatement extends Statement {
-    public ReturnStatement(Expr expr) {
+public class StatementReturn extends Statement {
+    public StatementReturn(Expr expr) {
         this.expr = expr;
     }
     
