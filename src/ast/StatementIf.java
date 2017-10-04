@@ -1,8 +1,8 @@
 package ast;
 
-public class IfStatement extends Statement {
+public class StatementIf extends Statement {
 
-    public IfStatement(Expr expr, Statement thenStmt, Statement elseStmt) {
+    public StatementIf(Expr expr, Statement thenStmt, Statement elseStmt) {
         this.expr = expr;
         this.thenStmt = thenStmt;
         this.elseStmt = elseStmt;
