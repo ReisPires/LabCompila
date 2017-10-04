@@ -907,27 +907,37 @@ public class Compiler {
 			else
 				lexer.nextToken();
                                 id = lexer.getStringValue();
+                               
                                 if (kraClass.getSuperclass() != null){
                                     kraClass =  symbolTable.getInGlobal(kraClass.getSuperclass().getCname());
-
+                                    
                                     /* fazer while ate que nao tenha mais super classe */
                                     do{
+                                        
                                         for(Variable v : kraClass.getMethodList()){
+                                            
                                             if (v.getName().compareTo(id) == 0){
                                                 if (v.getQualifier().compareTo("private") == 0) {
                                                     signalError.showError("Method '"+ id + "' was not found in the public interface of '" + kraClass.getCname() + "' or its superclasses");
                                                     break;
                                                 }
+                                                
                                                 haveMethod = true;
                                             }
+                                           
                                         }
-                                        kraClass =  symbolTable.getInGlobal(kraClass.getSuperclass().getCname());
-                                    }while (kraClass.getSuperclass() != null);
+                                        kraClass =  kraClass.getSuperclass();
+                                       
+                                    }while (kraClass != null);
+                                 
+                                    if (haveMethod == false){
+                                        signalError.showError("Method '" + id + "' was not found in superclass '"+bClass+"' or its superclasses");
+                                    }
                                 }
 			if ( lexer.token != Symbol.IDENT )
 				signalError.showError("Identifier expected");
 			messageName = lexer.getStringValue();
-                        
+                        System.out.println(messageName);
                         
 			/*
 			 * para fazer as confer�ncias sem�nticas, procure por 'messageName'
