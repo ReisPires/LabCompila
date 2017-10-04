@@ -18,7 +18,11 @@ public class Variable {
     public Type getType() {
         return type;
     }
-
+    
+    public String getQualifier(){
+        return this.qualifier;
+    }
+    
     private String name;
     private Type type;
     private String qualifier;

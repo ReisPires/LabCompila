@@ -3,6 +3,10 @@ package ast;
 
 public class PrimaryExpr extends Expr{
 
+    public PrimaryExpr(boolean namethis) {
+        this.isThis = namethis;
+    }
+    
     public PrimaryExpr(String name, Type type) {
       this.name = name;
       this.type = type;
@@ -21,4 +25,6 @@ public class PrimaryExpr extends Expr{
     
     private String name;
     private Type type;
+    private boolean isThis = false;
+    private boolean isSuper = false;
 }

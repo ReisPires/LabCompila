@@ -35,7 +35,7 @@ public class Compiler {
 			}
                         
 			classDec();
-                       
+                        
 			while ( lexer.token == Symbol.CLASS )
 				classDec();
 
@@ -168,6 +168,7 @@ public class Compiler {
 			switch (lexer.token) {
 			case PRIVATE:
 				lexer.nextToken();
+                                
 				qualifier = Symbol.PRIVATE;
 
 				break;
@@ -196,7 +197,7 @@ public class Compiler {
 			lexer.nextToken();
                         
 			if ( lexer.token == Symbol.LEFTPAR ){
-                           
+                                
 				methodDec(t, name, qualifier);
                                 
                         }
@@ -262,13 +263,16 @@ public class Compiler {
                 ArrayList<Variable> methods = cClass.getMethodList();
                 
                 if(methods.size() == 0){
-                    methods.add(var);                 
+                    
+                    methods.add(var); 
+                    System.out.print(var.getQualifier());
                 }
                 else{
                     
                     for(Variable v : methods){
                         
                         if (v.getName().compareTo(var.getName()) != 0){
+                            System.out.println("dentro de methods:" + var.getQualifier());
                              methods.add(var);
                              break;
                         }
@@ -278,7 +282,7 @@ public class Compiler {
                         }
                     }
                 }   
-    
+                
 		lexer.nextToken();
                 
 
@@ -438,7 +442,11 @@ public class Compiler {
 
 	private StatementList statementList() {
 		// CompStatement ::= "{" { Statement } "}"
+
+		
+
 		StatementList stmts = new StatementList();
+
                 Symbol tk;
 		// statements always begin with an identifier, if, read, write, ...
 		while ((tk = lexer.token) != Symbol.RIGHTCURBRACKET
@@ -458,7 +466,7 @@ public class Compiler {
 		switch (lexer.token) {
 		case THIS:
 		case IDENT:
-		case SUPER:
+		case SUPER: 
 		case INT:
 		case BOOLEAN:
 		case STRING:
@@ -535,6 +543,7 @@ public class Compiler {
 				// token � uma classe declarada textualmente antes desta
 				// instru��o
 				(lexer.token == Symbol.IDENT) && isType(lexer.getStringValue()) ) {
+                               
 			/*
 			 * uma declara��o de vari�vel. 'lexer.token' � o tipo da vari�vel
 			 *
@@ -547,7 +556,7 @@ public class Compiler {
 			/*
 			 * AssignExprLocalDec ::= Expression [ ``$=$'' Expression ]
 			 */
-
+                        
 			Expr expr1 = expr();
                         
 			if ( lexer.token == Symbol.ASSIGN ) {
@@ -795,7 +804,7 @@ public class Compiler {
 	 *                 "this" "." Id "." Id "(" [ ExpressionList ] ")"
 	 */
 	private Expr factor() {
-
+            
 		Expr anExpr;
 		ExprList exprList;
 		String messageName, id;
@@ -879,7 +888,10 @@ public class Compiler {
           	 *                 "this" "." Id "." Id "(" [ ExpressionList ] ")"
 			 */
 		case SUPER:
+                    
 			// "super" "." Id "(" [ ExpressionList ] ")"
+                    
+                        boolean haveMethod = false;
                         bClass = (String) curClass.pop();
                         kraClass =  symbolTable.getInGlobal(bClass);
                         curClass.push(bClass);
@@ -887,16 +899,36 @@ public class Compiler {
                         if (kraClass.getSuperclass()== null){
                             signalError.showError("'super' used in class '" + bClass + "' that does not have a superclass");
                         }
+                       
 			lexer.nextToken();
 			if ( lexer.token != Symbol.DOT ) {
 				signalError.showError("'.' expected");
 			}
 			else
 				lexer.nextToken();
+                                id = lexer.getStringValue();
+                                if (kraClass.getSuperclass() != null){
+                                    kraClass =  symbolTable.getInGlobal(kraClass.getSuperclass().getCname());
+
+                                    /* fazer while ate que nao tenha mais super classe */
+                                    do{
+                                        for(Variable v : kraClass.getMethodList()){
+                                            if (v.getName().compareTo(id) == 0){
+                                                if (v.getQualifier().compareTo("private") == 0) {
+                                                    signalError.showError("Method '"+ id + "' was not found in the public interface of '" + kraClass.getCname() + "' or its superclasses");
+                                                    break;
+                                                }
+                                                haveMethod = true;
+                                            }
+                                        }
+                                        kraClass =  symbolTable.getInGlobal(kraClass.getSuperclass().getCname());
+                                    }while (kraClass.getSuperclass() != null);
+                                }
 			if ( lexer.token != Symbol.IDENT )
 				signalError.showError("Identifier expected");
 			messageName = lexer.getStringValue();
-
+                        
+                        
 			/*
 			 * para fazer as confer�ncias sem�nticas, procure por 'messageName'
 			 * na superclasse/superclasse da superclasse etc
@@ -905,7 +937,7 @@ public class Compiler {
 			exprList = realParameters();
                         
                         /*Guardar tipo da classe???*/
-                    //    return PrimaryExpr(true, );
+                       // return new PrimaryExpr(true);
 			break;
 		case IDENT:
 			/*
@@ -973,10 +1005,11 @@ public class Compiler {
                                                    KraClass kClass =  symbolTable.getInGlobal(var.getType().getCname());
                                                    
                                                    
-                                                   Boolean haveMethod = false;
+                                                   haveMethod = false;
                                                    for(Variable v : kClass.getMethodList()){
                                                        if(v.getName().compareTo(id) == 0){
                                                            haveMethod = true;
+                                  
                                                        }
                                                    }
                                                    
@@ -1008,6 +1041,7 @@ public class Compiler {
                                                            }
                                                        }
                                                    }
+                                                   
                                                 }
 					}
 					else {
@@ -1033,10 +1067,11 @@ public class Compiler {
 				// retorne um objeto da ASA que representa 'this'
 				// confira se n�o estamos em um m�todo est�tico
                                 /*Retorna apenas um this*/
-                                //return PrimaryExpr("
-				return null;
+                                
+                                return new PrimaryExpr(true);
 			}
 			else {
+                            
 				lexer.nextToken();
 				if ( lexer.token != Symbol.IDENT )
 					signalError.showError("Identifier expected");
@@ -1054,7 +1089,7 @@ public class Compiler {
                                     if (var == null){
                                        String cClass = (String) curClass.pop();
                                        KraClass kClass =  symbolTable.getInGlobal(cClass);
-                                       Boolean haveMethod = false;
+                                       haveMethod = false;
                                        for(Variable v : kClass.getMethodList()){
                                            if(v.getName().compareTo(id) == 0){
                                                haveMethod = true;
@@ -1082,13 +1117,15 @@ public class Compiler {
 					 * confira se a classe corrente realmente possui uma
 					 * vari�vel de inst�ncia 'ident'
 					 */
-					return null;
+                                       
+					return new PrimaryExpr(true);
 				}
 			}
 			break;
 		default:
 			signalError.showError("Expression expected");
 		}
+                
 		return null;
 	}
 
