@@ -306,7 +306,7 @@ public class Compiler {
                 curClass.push(classe);
                 StatementList stmts = statementList(); 
 
-                // Iterates over statements
+              /*  // Iterates over statements
                 Boolean haveReturn = false;
                 if (stmts != null) {
                     for (int i = 0; i < stmts.getList().size(); ++i) {
@@ -496,7 +496,7 @@ public class Compiler {
 			break;
 		case LEFTCURBRACKET:
                     // FAZER O COMPOSITE
-			return compositeStatement();			
+			//return compositeStatement();			
 		default:
 			signalError.showError("Statement expected");
 		}
@@ -1003,11 +1003,14 @@ public class Compiler {
                                                 if (var != null){
                                                                                                      
                                                    KraClass kClass =  symbolTable.getInGlobal(var.getType().getCname());
-                                                   
+                                                   boolean isPrivate = false;
                                                    
                                                    haveMethod = false;
                                                    for(Variable v : kClass.getMethodList()){
                                                        if(v.getName().compareTo(id) == 0){
+                                                           if(v.getQualifier().compareTo("private") == 0){
+                                                               signalError.showError("Method '"+ v.getName() +"' was not found in the public interface of '" + kClass.getName() +"' or its superclasses");
+                                                           }
                                                            haveMethod = true;
                                   
                                                        }
