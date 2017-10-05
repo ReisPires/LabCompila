@@ -330,6 +330,9 @@ public class Compiler {
                                        }
                                     }
                                 }
+                                if (v.getType() != type){
+                                    signalError.showError("Method '"+ name +"' of subclass '"+ classe +"' has a signature different from method inherited from superclass '" +superClasses.getCname() +"'");
+                                }
                             }
                         }
                         superClasses =  superClasses.getSuperclass();
