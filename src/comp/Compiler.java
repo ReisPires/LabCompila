@@ -382,12 +382,15 @@ public class Compiler {
                 if (stmts != null) {
                     for (int i = 0; i < stmts.getList().size(); ++i) {
                         // Check if it's a 'return'
-                        if ("ReturnStatement".equals(stmts.getList().get(i).getClass().getSimpleName())) {
-                            haveReturn = true;
-                            StatementReturn returnStmt = (StatementReturn) stmts.getList().get(i);
-                            if (returnStmt.getExpr() == null || 
-                                (returnStmt.getExpr() != null && !returnStmt.getExpr().getType().getName().equals(type.getName())))
-                                    signalError.showError("Illegal 'return' statement. Method returns '" + type.getName() + "'");                        
+                        if (stmts.getList().get(i) != null){
+                        
+                            if ("ReturnStatement".equals(stmts.getList().get(i).getClass().getSimpleName())) {
+                                haveReturn = true;
+                                StatementReturn returnStmt = (StatementReturn) stmts.getList().get(i);
+                                if (returnStmt.getExpr() == null || 
+                                    (returnStmt.getExpr() != null && !returnStmt.getExpr().getType().getName().equals(type.getName())))
+                                        signalError.showError("Illegal 'return' statement. Method returns '" + type.getName() + "'");                        
+                            }
                         }
                     }
                 }
@@ -851,6 +854,11 @@ public class Compiler {
 				|| op == Symbol.AND) {
 			lexer.nextToken();
 			Expr right = signalFactor();
+                        if (op == Symbol.AND){
+                            if (!(left.getType() instanceof TypeBoolean) || !(right.getType() instanceof TypeBoolean)){
+                                signalError.showError("type 'int' does not support operator '&&'");
+                            }
+                        }
 			left = new CompositeExpr(left, op, right);
 		}
 		return left;
