@@ -841,6 +841,15 @@ public class Compiler {
 				|| op == Symbol.OR) {
 			lexer.nextToken();
 			Expr right = term();
+                        /*VERIFICAR SE O OR ENTRA NA CONDIÇÃO ABAIXO*/
+                        if(op == Symbol.MINUS || op == Symbol.PLUS){
+                            if (right.getType() != left.getType()){
+                                signalError.showError("operator '"+ op.toString() +"' of '" + left.getType().getName() + "' expects an '"+left.getType().getName()+"' value");
+                            }
+                            if (!(right.getType() instanceof TypeInt) || !(left.getType() instanceof TypeInt)){
+                                signalError.showError("type boolean does not support operation '"+ op.toString() +"'");
+                            }
+                        }
 			left = new CompositeExpr(left, op, right);
 		}
 		return left;
