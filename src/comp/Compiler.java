@@ -377,7 +377,7 @@ public class Compiler {
                 curClass.push(classe);
                 StatementList stmts = statementList(); 
 
-              /*  // Iterates over statements
+               // Iterates over statements
                 Boolean haveReturn = false;
                 if (stmts != null) {
                     for (int i = 0; i < stmts.getList().size(); ++i) {
@@ -759,6 +759,10 @@ public class Compiler {
                   
                     if (e.getType() instanceof KraClass){
                         signalError.showError("Command 'write' does not accept objects");
+                        
+                    }
+                    if (e.getType() instanceof TypeBoolean){
+                        signalError.showError("Command 'write' does not accept 'boolean' expressions");
                     }
                 }
                 
