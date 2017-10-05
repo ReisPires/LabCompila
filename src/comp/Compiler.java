@@ -258,33 +258,9 @@ public class Compiler {
                 /* Setar os metodos */
                 KraClass cClass = symbolTable.getInGlobal(classe);
                 
-                Variable var = new Variable(name, type, qualifier.toString());
-                
-                ArrayList<Variable> methods = cClass.getMethodList();
-                
-                if(methods.size() == 0){
-                    
-                    methods.add(var); 
-                    System.out.print(var.getQualifier());
-                }
-                else{
-                    
-                    for(Variable v : methods){
-                        
-                        if (v.getName().compareTo(var.getName()) != 0){
-                            System.out.println("dentro de methods:" + var.getQualifier());
-                             methods.add(var);
-                             break;
-                        }
-                        else{
-                            signalError.showError("Method '" + name + "' is being redefined");
-                            break;
-                        }
-                    }
-                }   
-                
+                KraClass superClasses = cClass.getSuperclass();
+
 		lexer.nextToken();
-                
 
                 ParamList params = null;
 		if ( lexer.token != Symbol.RIGHTPAR ){ 
@@ -294,7 +270,59 @@ public class Compiler {
                         signalError.showError("Method '" +  name + "' of class '" + classe + "' cannot take parameters");
                     }
                 }
+                Variable var = new Variable(name, type, qualifier.toString(), params);
                 
+                ArrayList<Variable> methods = cClass.getMethodList();
+                Iterator<Variable> itr;
+                Iterator<Variable> parametros;
+             
+                /* Possui super classe. Verificar se o metodo será redefinido */
+                if(superClasses != null) {
+                    do {
+                        for (Variable v : superClasses.getMethodList()){
+                            
+                            if(v.getName().compareTo(name) == 0){
+                                /*comparar os parametro*/
+                                if (params != null && v.getParam() != null){
+                                    itr = v.getParam().elements();
+                                    parametros = params.elements();
+                                    while(itr.hasNext() && parametros.hasNext()) {
+                                       Variable element = itr.next();
+                                       Variable pElement = parametros.next();
+                                      
+                                       if(element.getType().getName() != pElement.getType().getName()){
+                                           signalError.showError("Method '"+ name +"' is being redefined in subclass '" + classe +"' with a signature different from the method of superclass '"+ superClasses.getCname() +"'");
+                                           break;
+                                       }
+                                    }
+                                }
+                            }
+                        }
+                        superClasses =  superClasses.getSuperclass();
+                    } while (superClasses != null);
+                    
+                }
+               
+                if(methods.size() == 0){
+                    
+                    methods.add(var); 
+                    
+                }
+                else{
+                    
+                    for(Variable v : methods){
+                        
+                        if (v.getName().compareTo(var.getName()) != 0){
+                           
+                             methods.add(var);
+                             break;
+                        }
+                        else{
+                            signalError.showError("Method '" + name + "' is being redefined");
+                            break;
+                        }
+                    }
+                }   
                 
 		if ( lexer.token != Symbol.RIGHTPAR ) signalError.showError(") expected");
 
@@ -386,6 +414,7 @@ public class Compiler {
 		// ParamDec ::= Type Id
 
 		Type t = type();
+                
 		if ( lexer.token != Symbol.IDENT ) signalError.showError("Identifier expected");
                 Variable v = new Variable(lexer.getStringValue(), t);
                 symbolTable.putInLocal(v.getName(), v);
@@ -400,7 +429,7 @@ public class Compiler {
 		Type result;
 
 		switch (lexer.token) {
-
+                   
 		case VOID:
 			result = Type.voidType;
 			break;
@@ -408,7 +437,9 @@ public class Compiler {
 			result = Type.intType;
 			break;
 		case BOOLEAN:
+                     
 			result = Type.booleanType;
+                        
 			break;
 		case STRING:
 			result = Type.stringType;

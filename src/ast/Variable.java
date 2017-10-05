@@ -12,8 +12,17 @@ public class Variable {
         this.type = type;
         this.qualifier = qualifier;
     }
-
-    public String getName() { return name; }
+    public Variable (String name, Type type, String qualifier, ParamList paramList) {
+        this.name = name;
+        this.type = type;
+        this.qualifier = qualifier;
+        this.paramList = paramList;
+    }
+    
+    public ParamList getParam() {
+        return this.paramList;
+    }
+    public String getName() { return name; } 
 
     public Type getType() {
         return type;
@@ -26,4 +35,5 @@ public class Variable {
     private String name;
     private Type type;
     private String qualifier;
+    private ParamList paramList;
 }
