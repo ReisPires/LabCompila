@@ -221,13 +221,36 @@ public class Compiler {
 
 	private void instanceVarDec(Type type, String name) {
 		// InstVarDec ::= [ "static" ] "private" Type IdList ";"
+                String classe = (String) curClass.pop();
+                KraClass KClass = symbolTable.getInGlobal(classe);
+                curClass.push(classe);
+                if (KClass.getInstanceVariableList() == null) {
+                    
+                    InstanceVariableList instance = new InstanceVariableList();
+                    instance.addElement(new InstanceVariable(name, type));
+                   
+                    KClass.setInstanceVariableList(instance);
+                    
+                }
                 
 		while (lexer.token == Symbol.COMMA) {
 			lexer.nextToken();
 			if ( lexer.token != Symbol.IDENT )
 				signalError.showError("Identifier expected");
 			String variableName = lexer.getStringValue();
+                        Iterator<InstanceVariable> itr;
+                        InstanceVariableList instancias = KClass.getInstanceVariableList();
                         
+                        itr = instancias.elements();
+                        while(itr.hasNext()){
+                            Variable v = itr.next();
+                            if (v.getName().compareTo(variableName)==0){
+                                System.out.println("Instancia de variavel ja declarada");
+                            }
+                            else{
+                                instancias.addElement(new InstanceVariable(variableName, type));
+                            }
+                        }
 			lexer.nextToken();
 		}
 		if ( lexer.token != Symbol.SEMICOLON )
@@ -259,9 +282,20 @@ public class Compiler {
                 KraClass cClass = symbolTable.getInGlobal(classe);
                 
                 KraClass superClasses = cClass.getSuperclass();
-
+                InstanceVariableList instancias = cClass.getInstanceVariableList();
 		lexer.nextToken();
-
+                
+                /*Verificar se o metodo nao possui o mesmo nome da instancia de variavel*/
+                if (instancias != null){
+                    Iterator<InstanceVariable> itr;
+                    itr = instancias.elements();
+                    while(itr.hasNext()){
+                        Variable v = itr.next();
+                        if (v.getName().compareTo(name) == 0){
+                            signalError.showError("Method '"+name+"' has name equal to an instance variable");
+                        }
+                    }
+                }
                 ParamList params = null;
 		if ( lexer.token != Symbol.RIGHTPAR ){ 
                     params = formalParamDec();
