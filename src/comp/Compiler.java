@@ -375,8 +375,12 @@ public class Compiler {
 		lexer.nextToken();
 
                 curClass.push(classe);
+                
+                curMethod.push(var);
+                
                 StatementList stmts = statementList(); 
-
+                System.out.println(name);
+                curMethod.pop();
                // Iterates over statements
                 Boolean haveReturn = false;
                 if (stmts != null) {
@@ -706,13 +710,17 @@ public class Compiler {
 	}
 
 	private StatementReturn returnStatement() {
-
+                Variable var = (Variable) curMethod.pop();
+                if (var.getType() instanceof TypeVoid){
+                   signalError.showError("Illegal 'return' statement. Method returns 'void'");
+                }
 		lexer.nextToken();
 		Expr e = expr();
+                
 		if ( lexer.token != Symbol.SEMICOLON )
 			signalError.show(ErrorSignaller.semicolon_expected);
 		lexer.nextToken();
-                
+                curMethod.push(var);
                 return new StatementReturn(e);
 	}
 
@@ -1269,4 +1277,5 @@ public class Compiler {
 	private ErrorSignaller	signalError;
         private Stack curClass = new Stack();
         private Stack whileStmt = new Stack();
+        private Stack curMethod = new Stack();
 }
