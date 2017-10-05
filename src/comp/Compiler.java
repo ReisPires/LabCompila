@@ -393,15 +393,15 @@ public class Compiler {
                                 StatementReturn returnStmt = (StatementReturn) stmts.getList().get(i);
                                 if (returnStmt.getExpr() == null || 
                                     (returnStmt.getExpr() != null && !returnStmt.getExpr().getType().getName().equals(type.getName())))
-                                        signalError.showError("Illegal 'return' statement. Method returns '" + type.getName() + "'");                        
+                                     signalError.showError("Illegal 'return' statement. Method returns '" + type.getName() + "'");                        
                             }
                         }
                     }
                 }
                 
                 // Check if 'return' is missing
-                if (!haveReturn && !"void".equals(type.getName()))
-                    signalError.showError("Missing 'return' statement in method '" + name + "'");            
+                /* if (!haveReturn && !"void".equals(type.getName()))
+                    signalError.showError("Missing 'return' statement in method '" + name + "'");  */
                 
                 
 		if ( lexer.token != Symbol.RIGHTCURBRACKET ) signalError.showError("} expected");
@@ -716,7 +716,7 @@ public class Compiler {
                 }
 		lexer.nextToken();
 		Expr e = expr();
-                
+                System.out.println();
 		if ( lexer.token != Symbol.SEMICOLON )
 			signalError.show(ErrorSignaller.semicolon_expected);
 		lexer.nextToken();
@@ -953,6 +953,9 @@ public class Compiler {
 		case NOT:
 			lexer.nextToken();
 			anExpr = expr();
+                        if (anExpr.getType().getName().compareTo("int") == 0){
+                            signalError.showError("Operator '!' does not accepts 'int' values");
+                        }
 			return new UnaryExpr(anExpr, Symbol.NOT);
 			// ObjectCreation ::= "new" Id "(" ")"
 		case NEW:
