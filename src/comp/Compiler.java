@@ -145,14 +145,20 @@ public class Compiler {
 			if ( lexer.token != Symbol.IDENT )
 				signalError.show(ErrorSignaller.ident_expected);
 			String superclassName = lexer.getStringValue();
-
+                        
                         KraClass superClass = symbolTable.getInGlobal(superclassName);
                         if (superClass == null){
                             System.out.println("Erro");
                         }
                         else{
                             KraClass aClass = symbolTable.getInGlobal(className);
-                            aClass.setSuperclass(superClass);
+                            
+                            if (aClass.getCname().compareTo(superclassName) != 0){
+                                  aClass.setSuperclass(superClass);
+                            }
+                            else{
+                                signalError.showError("Class '"+ aClass.getCname() +"' is inheriting from itself");
+                            }
                         }
 
 			lexer.nextToken();
