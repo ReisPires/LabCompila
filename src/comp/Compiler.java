@@ -394,10 +394,8 @@ public class Compiler {
                 
                 // Check if 'return' is missing
                 if (!haveReturn && !"void".equals(type.getName()))
-                    signalError.showError("Missing 'return' statement in method '" + name + "'");
-
-            */
-
+                    signalError.showError("Missing 'return' statement in method '" + name + "'");            
+                
                 
 		if ( lexer.token != Symbol.RIGHTCURBRACKET ) signalError.showError("} expected");
 
@@ -407,18 +405,20 @@ public class Compiler {
 
 	}
 
-	private void localDec() {
+	private LocalDec localDec() {
 		// LocalDec ::= Type IdList ";"
 
 		Type type = type();
+                VariableList varList = new VariableList();
+                
 		if ( lexer.token != Symbol.IDENT ) signalError.showError("Identifier expected");
-		Variable v = new Variable(lexer.getStringValue(), type);
+		Variable v = new Variable(lexer.getStringValue(), type);                
                 
                 if(symbolTable.getInLocal(v.getName()) != null){
                     signalError.showError("Variable '" + v.getName() + "' is being redeclared", true);
                 } else{
                     symbolTable.putInLocal(v.getName(), v);
-
+                    varList.addElement(v);
                 }
 
 		lexer.nextToken();
@@ -436,10 +436,15 @@ public class Compiler {
                             signalError.showError("Variable '" + v.getName() + "'is being redeclared");
                         } else{
                             symbolTable.putInLocal(v.getName(), v);
+                            varList.addElement(v);
                         }
 			lexer.nextToken();
 
 		}
+                // TALVEZ ISSO BUGUE!!!!!!!
+                lexer.nextToken();
+                
+                return new LocalDec(type, varList);
 	}
 
 	private ParamList formalParamDec() {
@@ -504,21 +509,19 @@ public class Compiler {
 		return result;
 	}
 
-	private void compositeStatement() {
-
+	private CompositeStatement compositeStatement() {
 		lexer.nextToken();
-		statementList();
+		StatementList stmtList = statementList();
 		if ( lexer.token != Symbol.RIGHTCURBRACKET )
 			signalError.showError("} expected");
 		else
 			lexer.nextToken();
+                return new CompositeStatement(stmtList);
 	}
 
 	private StatementList statementList() {
 		// CompStatement ::= "{" { Statement } "}"
-
 		
-
 		StatementList stmts = new StatementList();
 
                 Symbol tk;
@@ -544,8 +547,7 @@ public class Compiler {
 		case INT:
 		case BOOLEAN:
 		case STRING:
-			assignExprLocalDec();
-			break;
+			return assignExprLocalDec();			
 		case ASSERT:
 			return assertStatement();			
 		case RETURN:
@@ -568,9 +570,8 @@ public class Compiler {
 		case SEMICOLON:
 			nullStatement();
 			break;
-		case LEFTCURBRACKET:
-                    // FAZER O COMPOSITE
-			//return compositeStatement();			
+		case LEFTCURBRACKET:                    
+			return compositeStatement();			
 		default:
 			signalError.showError("Statement expected");
 		}
@@ -610,7 +611,7 @@ public class Compiler {
 	/*
 	 * AssignExprLocalDec ::= Expression [ ``$=$'' Expression ] | LocalDec
 	 */
-	private Expr assignExprLocalDec() {
+	private AssignExprLocalDec assignExprLocalDec() {
 
 		if ( lexer.token == Symbol.INT || lexer.token == Symbol.BOOLEAN
 				|| lexer.token == Symbol.STRING ||
@@ -624,7 +625,7 @@ public class Compiler {
 			 * AssignExprLocalDec ::= Expression [ ``$=$'' Expression ] | LocalDec
 			 * LocalDec ::= Type IdList ``;''
 			 */
-			localDec();
+			return localDec();
 		}
 		else {
 			/*
@@ -632,10 +633,11 @@ public class Compiler {
 			 */
                         
 			Expr expr1 = expr();
+                        Expr expr2 = null;
                         
 			if ( lexer.token == Symbol.ASSIGN ) {
 				lexer.nextToken();
-				Expr expr2 = expr();
+				expr2 = expr();
                                 
                                 /* Verificar os tipos básicos */
                                 if ((expr1.getType() instanceof TypeInt) || (expr1.getType() instanceof TypeBoolean)){
@@ -649,9 +651,9 @@ public class Compiler {
 				else
 					lexer.nextToken();
 			}
-		}
-
-		return null;
+                        
+                        return new AssignExpr(expr1, expr2);
+		}	
 	}
 
 	private ExprList realParameters() {
