@@ -370,6 +370,8 @@ public class Compiler {
 			lexer.nextToken();
 
 		}
+                // TALVEZ ISSO BUGUE!!!!!!!
+                lexer.nextToken();
                 
                 return new LocalDec(type, varList);
 	}
@@ -471,8 +473,7 @@ public class Compiler {
 		case INT:
 		case BOOLEAN:
 		case STRING:
-			return assignExprLocalDec();
-			break;
+			return assignExprLocalDec();			
 		case ASSERT:
 			return assertStatement();			
 		case RETURN:
@@ -550,7 +551,7 @@ public class Compiler {
 			 * AssignExprLocalDec ::= Expression [ ``$=$'' Expression ] | LocalDec
 			 * LocalDec ::= Type IdList ``;''
 			 */
-			localDec();
+			return localDec();
 		}
 		else {
 			/*
@@ -558,10 +559,11 @@ public class Compiler {
 			 */
                         
 			Expr expr1 = expr();
+                        Expr expr2 = null;
                         
 			if ( lexer.token == Symbol.ASSIGN ) {
 				lexer.nextToken();
-				Expr expr2 = expr();
+				expr2 = expr();
                                 
                                 /* Verificar os tipos básicos */
                                 if ((expr1.getType() instanceof TypeInt) || (expr1.getType() instanceof TypeBoolean)){
@@ -575,9 +577,9 @@ public class Compiler {
 				else
 					lexer.nextToken();
 			}
-		}
-
-		return null;
+                        
+                        return new AssignExpr(expr1, expr2);
+		}	
 	}
 
 	private ExprList realParameters() {
