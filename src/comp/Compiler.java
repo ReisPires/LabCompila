@@ -145,14 +145,20 @@ public class Compiler {
 			if ( lexer.token != Symbol.IDENT )
 				signalError.show(ErrorSignaller.ident_expected);
 			String superclassName = lexer.getStringValue();
-
+                        
                         KraClass superClass = symbolTable.getInGlobal(superclassName);
                         if (superClass == null){
                             System.out.println("Erro");
                         }
                         else{
                             KraClass aClass = symbolTable.getInGlobal(className);
-                            aClass.setSuperclass(superClass);
+                            
+                            if (aClass.getCname().compareTo(superclassName) != 0){
+                                  aClass.setSuperclass(superClass);
+                            }
+                            else{
+                                signalError.showError("Class '"+ aClass.getCname() +"' is inheriting from itself");
+                            }
                         }
 
 			lexer.nextToken();
@@ -221,13 +227,36 @@ public class Compiler {
 
 	private void instanceVarDec(Type type, String name) {
 		// InstVarDec ::= [ "static" ] "private" Type IdList ";"
+                String classe = (String) curClass.pop();
+                KraClass KClass = symbolTable.getInGlobal(classe);
+                curClass.push(classe);
+                if (KClass.getInstanceVariableList() == null) {
+                    
+                    InstanceVariableList instance = new InstanceVariableList();
+                    instance.addElement(new InstanceVariable(name, type));
+                   
+                    KClass.setInstanceVariableList(instance);
+                    
+                }
                 
 		while (lexer.token == Symbol.COMMA) {
 			lexer.nextToken();
 			if ( lexer.token != Symbol.IDENT )
 				signalError.showError("Identifier expected");
 			String variableName = lexer.getStringValue();
+                        Iterator<InstanceVariable> itr;
+                        InstanceVariableList instancias = KClass.getInstanceVariableList();
                         
+                        itr = instancias.elements();
+                        while(itr.hasNext()){
+                            Variable v = itr.next();
+                            if (v.getName().compareTo(variableName)==0){
+                                System.out.println("Instancia de variavel ja declarada");
+                            }
+                            else{
+                                instancias.addElement(new InstanceVariable(variableName, type));
+                            }
+                        }
 			lexer.nextToken();
 		}
 		if ( lexer.token != Symbol.SEMICOLON )
@@ -258,21 +287,76 @@ public class Compiler {
                 /* Setar os metodos */
                 KraClass cClass = symbolTable.getInGlobal(classe);
                 
-                Variable var = new Variable(name, type, qualifier.toString());
+                KraClass superClasses = cClass.getSuperclass();
+                InstanceVariableList instancias = cClass.getInstanceVariableList();
+		lexer.nextToken();
+                
+                /*Verificar se o metodo nao possui o mesmo nome da instancia de variavel*/
+                if (instancias != null){
+                    Iterator<InstanceVariable> itr;
+                    itr = instancias.elements();
+                    while(itr.hasNext()){
+                        Variable v = itr.next();
+                        if (v.getName().compareTo(name) == 0){
+                            signalError.showError("Method '"+name+"' has name equal to an instance variable");
+                        }
+                    }
+                }
+                ParamList params = null;
+		if ( lexer.token != Symbol.RIGHTPAR ){ 
+                    params = formalParamDec();
+                    
+                    if (isProgramRun == true && params.getSize() != 0){
+                        signalError.showError("Method '" +  name + "' of class '" + classe + "' cannot take parameters");
+                    }
+                }
+                Variable var = new Variable(name, type, qualifier.toString(), params);
                 
                 ArrayList<Variable> methods = cClass.getMethodList();
-                
+                Iterator<Variable> itr;
+                Iterator<Variable> parametros;
+             
+                /* Possui super classe. Verificar se o metodo será redefinido */
+                if(superClasses != null) {
+                    do {
+                        for (Variable v : superClasses.getMethodList()){
+                            
+                            if(v.getName().compareTo(name) == 0){
+                                /*comparar os parametro*/
+                                if (params != null && v.getParam() != null){
+                                    itr = v.getParam().elements();
+                                    parametros = params.elements();
+                                    while(itr.hasNext() && parametros.hasNext()) {
+                                       Variable element = itr.next();
+                                       Variable pElement = parametros.next();
+                                      
+                                       if(element.getType().getName() != pElement.getType().getName()){
+                                           signalError.showError("Method '"+ name +"' is being redefined in subclass '" + classe +"' with a signature different from the method of superclass '"+ superClasses.getCname() +"'");
+                                           break;
+                                       }
+                                    }
+                                }
+                                if (v.getType() != type){
+                                    signalError.showError("Method '"+ name +"' of subclass '"+ classe +"' has a signature different from method inherited from superclass '" +superClasses.getCname() +"'");
+                                }
+                            }
+                        }
+                        superClasses =  superClasses.getSuperclass();
+                    } while (superClasses != null);
+                    
+                }
+               
                 if(methods.size() == 0){
                     
                     methods.add(var); 
-                    System.out.print(var.getQualifier());
+                    
                 }
                 else{
                     
                     for(Variable v : methods){
                         
                         if (v.getName().compareTo(var.getName()) != 0){
-                            System.out.println("dentro de methods:" + var.getQualifier());
+                           
                              methods.add(var);
                              break;
                         }
@@ -282,19 +366,6 @@ public class Compiler {
                         }
                     }
                 }   
-                
-		lexer.nextToken();
-                
-
-                ParamList params = null;
-		if ( lexer.token != Symbol.RIGHTPAR ){ 
-                    params = formalParamDec();
-                    
-                    if (isProgramRun == true && params.getSize() != 0){
-                        signalError.showError("Method '" +  name + "' of class '" + classe + "' cannot take parameters");
-                    }
-                }
-                
                 
 		if ( lexer.token != Symbol.RIGHTPAR ) signalError.showError(") expected");
 
@@ -306,7 +377,7 @@ public class Compiler {
                 curClass.push(classe);
                 StatementList stmts = statementList(); 
 
-                // Iterates over statements
+              /*  // Iterates over statements
                 Boolean haveReturn = false;
                 if (stmts != null) {
                     for (int i = 0; i < stmts.getList().size(); ++i) {
@@ -391,6 +462,7 @@ public class Compiler {
 		// ParamDec ::= Type Id
 
 		Type t = type();
+                
 		if ( lexer.token != Symbol.IDENT ) signalError.showError("Identifier expected");
                 Variable v = new Variable(lexer.getStringValue(), t);
                 symbolTable.putInLocal(v.getName(), v);
@@ -405,7 +477,7 @@ public class Compiler {
 		Type result;
 
 		switch (lexer.token) {
-
+                   
 		case VOID:
 			result = Type.voidType;
 			break;
@@ -413,7 +485,9 @@ public class Compiler {
 			result = Type.intType;
 			break;
 		case BOOLEAN:
+                     
 			result = Type.booleanType;
+                        
 			break;
 		case STRING:
 			result = Type.stringType;
@@ -599,6 +673,9 @@ public class Compiler {
 		if ( lexer.token != Symbol.LEFTPAR ) signalError.showError("( expected");
 		lexer.nextToken();
 		Expr e = expr();
+                if (!(e.getType() instanceof TypeBoolean)){
+                    signalError.showError("non-boolean expression in 'while' command");
+                }
 		if ( lexer.token != Symbol.RIGHTPAR ) signalError.showError(") expected");
 		lexer.nextToken();
 		Statement stmt = statement();
@@ -681,7 +758,7 @@ public class Compiler {
                 for(Expr e : arrayExpr){
                   
                     if (e.getType() instanceof KraClass){
-                        System.out.print("é classe");
+                        signalError.showError("Command 'write' does not accept objects");
                     }
                 }
                 
@@ -909,27 +986,37 @@ public class Compiler {
 			else
 				lexer.nextToken();
                                 id = lexer.getStringValue();
+                               
                                 if (kraClass.getSuperclass() != null){
                                     kraClass =  symbolTable.getInGlobal(kraClass.getSuperclass().getCname());
-
+                                    
                                     /* fazer while ate que nao tenha mais super classe */
                                     do{
+                                        
                                         for(Variable v : kraClass.getMethodList()){
+                                            
                                             if (v.getName().compareTo(id) == 0){
                                                 if (v.getQualifier().compareTo("private") == 0) {
                                                     signalError.showError("Method '"+ id + "' was not found in the public interface of '" + kraClass.getCname() + "' or its superclasses");
                                                     break;
                                                 }
+                                                
                                                 haveMethod = true;
                                             }
+                                           
                                         }
-                                        kraClass =  symbolTable.getInGlobal(kraClass.getSuperclass().getCname());
-                                    }while (kraClass.getSuperclass() != null);
+                                        kraClass =  kraClass.getSuperclass();
+                                       
+                                    }while (kraClass != null);
+                                 
+                                    if (haveMethod == false){
+                                        signalError.showError("Method '" + id + "' was not found in superclass '"+bClass+"' or its superclasses");
+                                    }
                                 }
 			if ( lexer.token != Symbol.IDENT )
 				signalError.showError("Identifier expected");
 			messageName = lexer.getStringValue();
-                        
+                        System.out.println(messageName);
                         
 			/*
 			 * para fazer as confer�ncias sem�nticas, procure por 'messageName'
@@ -1005,11 +1092,14 @@ public class Compiler {
                                                 if (var != null){
                                                                                                      
                                                    KraClass kClass =  symbolTable.getInGlobal(var.getType().getCname());
-                                                   
+                                                   boolean isPrivate = false;
                                                    
                                                    haveMethod = false;
                                                    for(Variable v : kClass.getMethodList()){
                                                        if(v.getName().compareTo(id) == 0){
+                                                           if(v.getQualifier().compareTo("private") == 0){
+                                                               signalError.showError("Method '"+ v.getName() +"' was not found in the public interface of '" + kClass.getName() +"' or its superclasses");
+                                                           }
                                                            haveMethod = true;
                                   
                                                        }
