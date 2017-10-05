@@ -671,6 +671,9 @@ public class Compiler {
 		if ( lexer.token != Symbol.LEFTPAR ) signalError.showError("( expected");
 		lexer.nextToken();
 		Expr e = expr();
+                if (!(e.getType() instanceof TypeBoolean)){
+                    signalError.showError("non-boolean expression in 'while' command");
+                }
 		if ( lexer.token != Symbol.RIGHTPAR ) signalError.showError(") expected");
 		lexer.nextToken();
 		Statement stmt = statement();
