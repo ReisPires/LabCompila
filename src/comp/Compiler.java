@@ -377,7 +377,7 @@ public class Compiler {
                 curClass.push(classe);
                 StatementList stmts = statementList(); 
 
-              /*  // Iterates over statements
+                // Iterates over statements
                 Boolean haveReturn = false;
                 if (stmts != null) {
                     for (int i = 0; i < stmts.getList().size(); ++i) {
