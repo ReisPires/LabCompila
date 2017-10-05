@@ -323,10 +323,8 @@ public class Compiler {
                 
                 // Check if 'return' is missing
                 if (!haveReturn && !"void".equals(type.getName()))
-                    signalError.showError("Missing 'return' statement in method '" + name + "'");
-
-            */
-
+                    signalError.showError("Missing 'return' statement in method '" + name + "'");            
+                
                 
 		if ( lexer.token != Symbol.RIGHTCURBRACKET ) signalError.showError("} expected");
 
@@ -336,18 +334,20 @@ public class Compiler {
 
 	}
 
-	private void localDec() {
+	private LocalDec localDec() {
 		// LocalDec ::= Type IdList ";"
 
 		Type type = type();
+                VariableList varList = new VariableList();
+                
 		if ( lexer.token != Symbol.IDENT ) signalError.showError("Identifier expected");
-		Variable v = new Variable(lexer.getStringValue(), type);
+		Variable v = new Variable(lexer.getStringValue(), type);                
                 
                 if(symbolTable.getInLocal(v.getName()) != null){
                     signalError.showError("Variable '" + v.getName() + "' is being redeclared", true);
                 } else{
                     symbolTable.putInLocal(v.getName(), v);
-
+                    varList.addElement(v);
                 }
 
 		lexer.nextToken();
@@ -365,10 +365,13 @@ public class Compiler {
                             signalError.showError("Variable '" + v.getName() + "'is being redeclared");
                         } else{
                             symbolTable.putInLocal(v.getName(), v);
+                            varList.addElement(v);
                         }
 			lexer.nextToken();
 
 		}
+                
+                return new LocalDec(type, varList);
 	}
 
 	private ParamList formalParamDec() {
@@ -430,21 +433,19 @@ public class Compiler {
 		return result;
 	}
 
-	private void compositeStatement() {
-
+	private CompositeStatement compositeStatement() {
 		lexer.nextToken();
-		statementList();
+		StatementList stmtList = statementList();
 		if ( lexer.token != Symbol.RIGHTCURBRACKET )
 			signalError.showError("} expected");
 		else
 			lexer.nextToken();
+                return new CompositeStatement(stmtList);
 	}
 
 	private StatementList statementList() {
 		// CompStatement ::= "{" { Statement } "}"
-
 		
-
 		StatementList stmts = new StatementList();
 
                 Symbol tk;
@@ -470,7 +471,7 @@ public class Compiler {
 		case INT:
 		case BOOLEAN:
 		case STRING:
-			assignExprLocalDec();
+			return assignExprLocalDec();
 			break;
 		case ASSERT:
 			return assertStatement();			
@@ -494,8 +495,7 @@ public class Compiler {
 		case SEMICOLON:
 			nullStatement();
 			break;
-		case LEFTCURBRACKET:
-                    // FAZER O COMPOSITE
+		case LEFTCURBRACKET:                    
 			return compositeStatement();			
 		default:
 			signalError.showError("Statement expected");
@@ -536,7 +536,7 @@ public class Compiler {
 	/*
 	 * AssignExprLocalDec ::= Expression [ ``$=$'' Expression ] | LocalDec
 	 */
-	private Expr assignExprLocalDec() {
+	private AssignExprLocalDec assignExprLocalDec() {
 
 		if ( lexer.token == Symbol.INT || lexer.token == Symbol.BOOLEAN
 				|| lexer.token == Symbol.STRING ||
