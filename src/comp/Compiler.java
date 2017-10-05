@@ -744,7 +744,7 @@ public class Compiler {
                 for(Expr e : arrayExpr){
                   
                     if (e.getType() instanceof KraClass){
-                        System.out.print("é classe");
+                        signalError.showError("Command 'write' does not accept objects");
                     }
                 }
                 
