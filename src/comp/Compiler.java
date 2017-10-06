@@ -400,8 +400,8 @@ public class Compiler {
                 }
                 
                 // Check if 'return' is missing
-                /* if (!haveReturn && !"void".equals(type.getName()))
-                    signalError.showError("Missing 'return' statement in method '" + name + "'");  */
+                 if (!haveReturn && !"void".equals(type.getName()))
+                    signalError.showError("Missing 'return' statement in method '" + name + "'");  
                 
                 
 		if ( lexer.token != Symbol.RIGHTCURBRACKET ) signalError.showError("} expected");
@@ -1093,7 +1093,10 @@ public class Compiler {
                                         
 					lexer.nextToken();
 					id = lexer.getStringValue();
-                                        
+                                        Variable variable = symbolTable.getInLocal(firstId);
+                                        if (!(variable.getType() instanceof KraClass)){
+                                            signalError.showError("Message send to a non-object receiver");
+                                        }
 					if ( lexer.token == Symbol.DOT ) {
 						// Id "." Id "." Id "(" [ ExpressionList ] ")"
 						/*
