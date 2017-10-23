@@ -379,8 +379,10 @@ public class Compiler {
                 curMethod.push(var);
                 
                 StatementList stmts = statementList(); 
+    
                 System.out.println(name);
                 curMethod.pop();
+    
                // Iterates over statements
                 Boolean haveReturn = false;
                 if (stmts != null) {
