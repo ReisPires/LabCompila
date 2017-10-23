@@ -747,12 +747,49 @@ public class Compiler {
 
 	private StatementReturn returnStatement() {
                 Variable var = (Variable) curMethod.pop();
+                
                 if (var.getType() instanceof TypeVoid){
                    signalError.showError("Illegal 'return' statement. Method returns 'void'");
                 }
+                
 		lexer.nextToken();
 		Expr e = expr();
-                System.out.println();
+                if (var.getType() instanceof KraClass) {
+                   KraClass aClass = symbolTable.getInGlobal(var.getType().getName());
+                   KraClass bClass = symbolTable.getInGlobal(e.getType().getName());
+                   
+                   if (aClass.getCname().compareTo(bClass.getCname()) != 0){
+                       
+                    if (aClass.getSuperclass() == null && bClass.getSuperclass() == null) {
+                         signalError.showError("Type error: type of the expression returned is not subclass of the method return type");
+                    }
+                    else {
+                          if (bClass.getSuperclass() != null && aClass.getSuperclass() == null) {
+                             boolean haveSuper = false;
+                             bClass =  symbolTable.getInGlobal(bClass.getSuperclass().getCname());
+
+                            /* fazer while ate que nao tenha mais super classe */
+                            do{
+                                if (bClass.getCname().compareTo(aClass.getCname()) == 0){
+                                    haveSuper = true;
+                                }
+
+                                bClass =  bClass.getSuperclass();
+
+                            }while (bClass != null);
+
+                            if (!haveSuper) {
+                                 signalError.showError("Type error: type of the expression returned is not subclass of the method return type");
+                               }
+                          }
+                          else {
+                              signalError.showError("Type error: type of the expression returned is not subclass of the method return type");
+                          }
+                          
+                       }
+
+                   }
+                }
 		if ( lexer.token != Symbol.SEMICOLON )
 			signalError.show(ErrorSignaller.semicolon_expected);
 		lexer.nextToken();
