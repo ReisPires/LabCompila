@@ -47,9 +47,12 @@ public class Compiler {
 				signalError.showError("End of file expected");
 			}
 		}
-		catch( RuntimeException e) {
-			// if there was an exception, there is a compilation signalError
-		}
+                catch( CompilerError e) {
+                 // if there was an exception, there is a compilation signalError
+                }
+                catch ( RuntimeException e ) {
+                    e.printStackTrace();
+                }
 		return program;
 	}
 
