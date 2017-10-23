@@ -682,13 +682,16 @@ public class Compiler {
                                     if(expr2 instanceof NullExpr){
                                         signalError.showError("Type error: 'null' cannot be assigned to a variable of a basic type");
                                     }
+                                    if (expr1.getType() instanceof TypeInt && (expr2.getType() instanceof TypeBoolean)) {
+                                        signalError.showError("Type error: value of the right-hand side is not subtype of the variable of the left-hand side.");
+                                    }
                                 }
                                 if (expr1.getType() instanceof TypeBoolean) {
                                     if (!(expr2.getType() instanceof TypeBoolean)) {
                                         signalError.showError("'"+ expr2.getType().getCname() + "' cannot be assigned to 'boolean'");
                                     }
                                 }
-                                System.out.println(expr2);
+                                
 				if ( lexer.token != Symbol.SEMICOLON )
 					signalError.showError("';' expected", true);
 				else
