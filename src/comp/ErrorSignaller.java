@@ -52,7 +52,7 @@ public class ErrorSignaller {
       foundCompilerError = true;
       CompilationError newError = new CompilationError(strMessage, lineNumber, lineWithError);
       compilationErrorList.add(newError);
-      throw new RuntimeException();
+      throw new CompilerError();
    }
 
 
