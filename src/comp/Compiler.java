@@ -38,7 +38,7 @@ public class Compiler {
                         
 			while ( lexer.token == Symbol.CLASS )
 				classDec();
-
+                        
                         if(symbolTable.getInGlobal("Program") == null){
                             signalError.showError("Source code without a class 'Program'");
                         }
@@ -232,6 +232,7 @@ public class Compiler {
 		// InstVarDec ::= [ "static" ] "private" Type IdList ";"
                 String classe = (String) curClass.pop();
                 KraClass KClass = symbolTable.getInGlobal(classe);
+                
                 curClass.push(classe);
                 if (KClass.getInstanceVariableList() == null) {
                     
@@ -239,13 +240,36 @@ public class Compiler {
                     instance.addElement(new InstanceVariable(name, type));
                    
                     KClass.setInstanceVariableList(instance);
-                    
+                   
+                }
+                else {
+                    Iterator<InstanceVariable> itr;
+                    InstanceVariableList instancias = KClass.getInstanceVariableList();
+                  
+                    itr = instancias.elements();
+                    boolean adc = false;
+                    while(itr.hasNext() && !adc){
+                        Variable v = itr.next();
+                      
+                        if (v.getName().compareTo(name)== 0){
+                            signalError.showError("Variable '" + name +"' is being redeclared");
+                           
+                        }
+                        else{
+                           InstanceVariable instanceVariable = new InstanceVariable(name, type);
+                           instancias.addElement(instanceVariable);
+                           adc = true;
+                          // instancias.addElement();
+                        }
+                    }
                 }
                 
 		while (lexer.token == Symbol.COMMA) {
+                    
 			lexer.nextToken();
 			if ( lexer.token != Symbol.IDENT )
 				signalError.showError("Identifier expected");
+                        
 			String variableName = lexer.getStringValue();
                         Iterator<InstanceVariable> itr;
                         InstanceVariableList instancias = KClass.getInstanceVariableList();
@@ -253,6 +277,7 @@ public class Compiler {
                         itr = instancias.elements();
                         while(itr.hasNext()){
                             Variable v = itr.next();
+                            
                             if (v.getName().compareTo(variableName)==0){
                                 System.out.println("Instancia de variavel ja declarada");
                             }
@@ -396,15 +421,16 @@ public class Compiler {
                                 StatementReturn returnStmt = (StatementReturn) stmts.getList().get(i);
                                 if (returnStmt.getExpr() == null || 
                                     (returnStmt.getExpr() != null && !returnStmt.getExpr().getType().getName().equals(type.getName())))
-                                     signalError.showError("Illegal 'return' statement. Method returns '" + type.getName() + "'");                        
+                                   System.out.println("aqui");
+                                    // signalError.showError("Illegal 'return' statement. Method returns '" + type.getName() + "'");                        
                             }
                         }
                     }
                 }
                 
                 // Check if 'return' is missing
-                 if (!haveReturn && !"void".equals(type.getName()))
-                    signalError.showError("Missing 'return' statement in method '" + name + "'");  
+               /*  if (!haveReturn && !"void".equals(type.getName()))
+                    signalError.showError("Missing 'return' statement in method '" + name + "'");  */
                 
                 
 		if ( lexer.token != Symbol.RIGHTCURBRACKET ) signalError.showError("} expected");
