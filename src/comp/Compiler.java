@@ -685,13 +685,44 @@ public class Compiler {
                                     if (expr1.getType() instanceof TypeInt && (expr2.getType() instanceof TypeBoolean)) {
                                         signalError.showError("Type error: value of the right-hand side is not subtype of the variable of the left-hand side.");
                                     }
+                                    if (expr1.getType() instanceof TypeInt && expr2.getType() instanceof KraClass) {
+                                        signalError.showError("Type error: type of the left-hand side of the assignment is a basic type and the type of the right-hand side is a class");
+                                    }
                                 }
                                 if (expr1.getType() instanceof TypeBoolean) {
                                     if (!(expr2.getType() instanceof TypeBoolean)) {
                                         signalError.showError("'"+ expr2.getType().getCname() + "' cannot be assigned to 'boolean'");
                                     }
                                 }
-                                
+                                if (expr1.getType() instanceof KraClass && !(expr2 instanceof NullExpr)) {
+                                    
+                                    if (expr1.getType().getCname().compareTo(expr2.getType().getCname()) != 0) {
+                                        if (expr2.getType() instanceof KraClass) {
+                                        KraClass bClass = symbolTable.getInGlobal(expr2.getType().getCname());
+
+                                            if (bClass.getSuperclass() == null) {
+                                                signalError.showError("Type error: type of the right-hand side of the assignment is not a subclass of the left-hand side");
+                                            }
+                                            else {
+                                               boolean haveSuper = false;
+                                               do{
+                                                if (bClass.getCname().compareTo(expr1.getType().getCname()) == 0){
+                                                    haveSuper = true;
+                                                }
+
+                                                bClass =  bClass.getSuperclass();
+
+                                                }while (bClass != null);
+                                               if (!haveSuper ) {
+                                                   signalError.showError("Type error: type of the right-hand side of the assignment is not a subclass of the left-hand side");
+                                               }
+                                            }
+                                        } 
+                                        else {
+                                            signalError.showError("Type error: the type of the expression of the right-hand side is a basic type and the type of the variable of the left-hand side is a class");
+                                        }
+                                    }
+                                }
 				if ( lexer.token != Symbol.SEMICOLON )
 					signalError.showError("';' expected", true);
 				else
@@ -917,7 +948,7 @@ public class Compiler {
                             if (!(right instanceof NullExpr) && left.getType().getName().compareTo(right.getType().getName()) != 0) {
                               KraClass aClass = symbolTable.getInGlobal(left.getType().getName()); 
                               KraClass bClass = symbolTable.getInGlobal(right.getType().getName());
-                              
+                             
                               if (aClass.getSuperclass() == null && bClass.getSuperclass() == null) {
                                   
                                   signalError.showError("Incompatible types cannot be compared with '"+ op.toString() +"' because the result will always be 'false'");
