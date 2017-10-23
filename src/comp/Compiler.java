@@ -375,26 +375,35 @@ public class Compiler {
 		lexer.nextToken();
 
                 curClass.push(classe);
+                
+                curMethod.push(var);
+                
                 StatementList stmts = statementList(); 
-
-                // Iterates over statements
+    
+                System.out.println(name);
+                curMethod.pop();
+    
+               // Iterates over statements
                 Boolean haveReturn = false;
                 if (stmts != null) {
                     for (int i = 0; i < stmts.getList().size(); ++i) {
                         // Check if it's a 'return'
-                        if ("ReturnStatement".equals(stmts.getList().get(i).getClass().getSimpleName())) {
-                            haveReturn = true;
-                            StatementReturn returnStmt = (StatementReturn) stmts.getList().get(i);
-                            if (returnStmt.getExpr() == null || 
-                                (returnStmt.getExpr() != null && !returnStmt.getExpr().getType().getName().equals(type.getName())))
-                                    signalError.showError("Illegal 'return' statement. Method returns '" + type.getName() + "'");                        
+                        if (stmts.getList().get(i) != null){
+                        
+                            if ("ReturnStatement".equals(stmts.getList().get(i).getClass().getSimpleName())) {
+                                haveReturn = true;
+                                StatementReturn returnStmt = (StatementReturn) stmts.getList().get(i);
+                                if (returnStmt.getExpr() == null || 
+                                    (returnStmt.getExpr() != null && !returnStmt.getExpr().getType().getName().equals(type.getName())))
+                                     signalError.showError("Illegal 'return' statement. Method returns '" + type.getName() + "'");                        
+                            }
                         }
                     }
                 }
                 
                 // Check if 'return' is missing
-                if (!haveReturn && !"void".equals(type.getName()))
-                    signalError.showError("Missing 'return' statement in method '" + name + "'");            
+                 if (!haveReturn && !"void".equals(type.getName()))
+                    signalError.showError("Missing 'return' statement in method '" + name + "'");  
                 
                 
 		if ( lexer.token != Symbol.RIGHTCURBRACKET ) signalError.showError("} expected");
@@ -703,13 +712,17 @@ public class Compiler {
 	}
 
 	private StatementReturn returnStatement() {
-
+                Variable var = (Variable) curMethod.pop();
+                if (var.getType() instanceof TypeVoid){
+                   signalError.showError("Illegal 'return' statement. Method returns 'void'");
+                }
 		lexer.nextToken();
 		Expr e = expr();
+                System.out.println();
 		if ( lexer.token != Symbol.SEMICOLON )
 			signalError.show(ErrorSignaller.semicolon_expected);
 		lexer.nextToken();
-                
+                curMethod.push(var);
                 return new StatementReturn(e);
 	}
 
@@ -759,6 +772,10 @@ public class Compiler {
                   
                     if (e.getType() instanceof KraClass){
                         signalError.showError("Command 'write' does not accept objects");
+                        
+                    }
+                    if (e.getType() instanceof TypeBoolean){
+                        signalError.showError("Command 'write' does not accept 'boolean' expressions");
                     }
                 }
                 
@@ -834,6 +851,15 @@ public class Compiler {
 				|| op == Symbol.OR) {
 			lexer.nextToken();
 			Expr right = term();
+                        /*VERIFICAR SE O OR ENTRA NA CONDIÇÃO ABAIXO*/
+                        if(op == Symbol.MINUS || op == Symbol.PLUS){
+                            if (right.getType() != left.getType()){
+                                signalError.showError("operator '"+ op.toString() +"' of '" + left.getType().getName() + "' expects an '"+left.getType().getName()+"' value");
+                            }
+                            if (!(right.getType() instanceof TypeInt) || !(left.getType() instanceof TypeInt)){
+                                signalError.showError("type boolean does not support operation '"+ op.toString() +"'");
+                            }
+                        }
 			left = new CompositeExpr(left, op, right);
 		}
 		return left;
@@ -847,6 +873,11 @@ public class Compiler {
 				|| op == Symbol.AND) {
 			lexer.nextToken();
 			Expr right = signalFactor();
+                        if (op == Symbol.AND){
+                            if (!(left.getType() instanceof TypeBoolean) || !(right.getType() instanceof TypeBoolean)){
+                                signalError.showError("type 'int' does not support operator '&&'");
+                            }
+                        }
 			left = new CompositeExpr(left, op, right);
 		}
 		return left;
@@ -924,6 +955,9 @@ public class Compiler {
 		case NOT:
 			lexer.nextToken();
 			anExpr = expr();
+                        if (anExpr.getType().getName().compareTo("int") == 0){
+                            signalError.showError("Operator '!' does not accepts 'int' values");
+                        }
 			return new UnaryExpr(anExpr, Symbol.NOT);
 			// ObjectCreation ::= "new" Id "(" ")"
 		case NEW:
@@ -1061,7 +1095,10 @@ public class Compiler {
                                         
 					lexer.nextToken();
 					id = lexer.getStringValue();
-                                        
+                                        Variable variable = symbolTable.getInLocal(firstId);
+                                        if (!(variable.getType() instanceof KraClass)){
+                                            signalError.showError("Message send to a non-object receiver");
+                                        }
 					if ( lexer.token == Symbol.DOT ) {
 						// Id "." Id "." Id "(" [ ExpressionList ] ")"
 						/*
@@ -1248,4 +1285,5 @@ public class Compiler {
 	private ErrorSignaller	signalError;
         private Stack curClass = new Stack();
         private Stack whileStmt = new Stack();
+        private Stack curMethod = new Stack();
 }
