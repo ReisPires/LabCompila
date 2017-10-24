@@ -444,8 +444,9 @@ public class Compiler {
 
 	private LocalDec localDec() {
 		// LocalDec ::= Type IdList ";"
-
+                
 		Type type = type();
+                
                 VariableList varList = new VariableList();
                 
 		if ( lexer.token != Symbol.IDENT ) signalError.showError("Identifier expected");
@@ -512,7 +513,7 @@ public class Compiler {
 	private Type type() {
 		// Type ::= BasicType | Id
 		Type result;
-
+                
 		switch (lexer.token) {
                    
 		case VOID:
@@ -649,19 +650,20 @@ public class Compiler {
 	 * AssignExprLocalDec ::= Expression [ ``$=$'' Expression ] | LocalDec
 	 */
 	private AssignExprLocalDec assignExprLocalDec() {
-
+                //ok-sintatico12?
 		if ( lexer.token == Symbol.INT || lexer.token == Symbol.BOOLEAN
 				|| lexer.token == Symbol.STRING ||
 				// token � uma classe declarada textualmente antes desta
 				// instru��o
 				(lexer.token == Symbol.IDENT) && isType(lexer.getStringValue()) ) {
-                               
+                        
 			/*
 			 * uma declara��o de vari�vel. 'lexer.token' � o tipo da vari�vel
 			 *
 			 * AssignExprLocalDec ::= Expression [ ``$=$'' Expression ] | LocalDec
 			 * LocalDec ::= Type IdList ``;''
 			 */
+                        
 			return localDec();
 		}
 		else {
@@ -720,6 +722,12 @@ public class Compiler {
                                         else {
                                             signalError.showError("Type error: the type of the expression of the right-hand side is a basic type and the type of the variable of the left-hand side is a class");
                                         }
+                                    }
+                                }
+                                if (expr2 != null) {
+                                    
+                                   if ( expr2.getType() instanceof TypeVoid) {
+                                           signalError.showError("Expression expected in the right-hand side of assignment");
                                     }
                                 }
 				if ( lexer.token != Symbol.SEMICOLON )
@@ -1435,6 +1443,7 @@ public class Compiler {
           	 *                 "this" "." Id "." Id "(" [ ExpressionList ] ")"
 			 */
                         idList[0] = "this";
+
 			lexer.nextToken();
                         bClass = (String) curClass.pop();
                         kraClass = symbolTable.getInGlobal(bClass);
@@ -1467,7 +1476,7 @@ public class Compiler {
                                             hasVar = true;                                                                             
                                     }
                                 }
-
+                    
                                 // Verifica se o segundo Id é uma método da classe o captura                                                                                                                                                                                                        
                                 do {
                                     for (Variable v : kraClass.getMethodList()) {
@@ -1489,6 +1498,7 @@ public class Compiler {
                                 
 				// j� analisou "this" "." Id
 				if ( lexer.token == Symbol.LEFTPAR ) {
+                                    
                                     // "this" "." Id "(" [ ExpressionList ] ")"
                                     /*
                                      * Confira se a classe corrente possui um m�todo cujo nome �
@@ -1497,6 +1507,28 @@ public class Compiler {
                                     if (methodVariable == null)
                                         signalError.showError("Method '" + idList[1] + "' was not found in the public interface of '" + bClass + "' or its superclasses");
                                     exprList = this.realParameters();
+
+                                    
+                                    if (hasMethod) {
+                                        ParamList elements = methodVariable.getParam();
+                                        ArrayList<Expr> expr = exprList.getExpr();
+                                        boolean hasParam = false;
+                                        Iterator<Variable> itr = elements.elements();
+                                        while(itr.hasNext()) {
+                                            Variable v = itr.next();
+                                            for (Expr e : expr){
+                                                if (e.getType().getCname().compareTo(v.getType().getCname()) == 0) {
+                                                    hasParam = true;
+                                                }
+                                            }
+                                        }
+                                         if (!hasParam) {
+                                             signalError.showError("Type error: the type of the real parameter is not subclass of the type of the formal parameter");
+                                         }
+                                    }
+                                    
+                                   
+                                   
                                     if (!checkMethodParameters(exprList, methodVariable))
                                         signalError.showError("Wrong parameteters for method ''" + methodVariable.getName() + "'");
                                     return new PrimaryExpr(idList, exprList, methodVariable.getType());                                    
@@ -1540,6 +1572,7 @@ public class Compiler {
                                         }
                                         
 					exprList = this.realParameters();
+                              
                                         if (!checkMethodParameters(exprList, methodVariable))
                                             signalError.showError("Wrong parameteters for method ''" + methodVariable.getName() +"'");
                                         return new PrimaryExpr(idList, exprList, methodVariable.getType());
