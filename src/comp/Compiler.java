@@ -1443,7 +1443,7 @@ public class Compiler {
           	 *                 "this" "." Id "." Id "(" [ ExpressionList ] ")"
 			 */
                         idList[0] = "this";
-                        
+
 			lexer.nextToken();
                         bClass = (String) curClass.pop();
                         kraClass = symbolTable.getInGlobal(bClass);
@@ -1476,7 +1476,7 @@ public class Compiler {
                                             hasVar = true;                                                                             
                                     }
                                 }
-                                
+                    
                                 // Verifica se o segundo Id é uma método da classe o captura                                                                                                                                                                                                        
                                 do {
                                     for (Variable v : kraClass.getMethodList()) {
@@ -1507,6 +1507,7 @@ public class Compiler {
                                     if (methodVariable == null)
                                         signalError.showError("Method '" + idList[1] + "' was not found in the public interface of '" + bClass + "' or its superclasses");
                                     exprList = this.realParameters();
+
                                     
                                     if (hasMethod) {
                                         ParamList elements = methodVariable.getParam();
@@ -1527,7 +1528,7 @@ public class Compiler {
                                     }
                                     
                                    
-                                    
+                                   
                                     if (!checkMethodParameters(exprList, methodVariable))
                                         signalError.showError("Wrong parameteters for method ''" + methodVariable.getName() + "'");
                                     return new PrimaryExpr(idList, exprList, methodVariable.getType());                                    
@@ -1571,7 +1572,7 @@ public class Compiler {
                                         }
                                         
 					exprList = this.realParameters();
-                                        
+                              
                                         if (!checkMethodParameters(exprList, methodVariable))
                                             signalError.showError("Wrong parameteters for method ''" + methodVariable.getName() +"'");
                                         return new PrimaryExpr(idList, exprList, methodVariable.getType());
