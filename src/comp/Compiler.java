@@ -1443,6 +1443,7 @@ public class Compiler {
           	 *                 "this" "." Id "." Id "(" [ ExpressionList ] ")"
 			 */
                         idList[0] = "this";
+                        
 			lexer.nextToken();
                         bClass = (String) curClass.pop();
                         kraClass = symbolTable.getInGlobal(bClass);
@@ -1475,7 +1476,7 @@ public class Compiler {
                                             hasVar = true;                                                                             
                                     }
                                 }
-
+                                
                                 // Verifica se o segundo Id é uma método da classe o captura                                                                                                                                                                                                        
                                 do {
                                     for (Variable v : kraClass.getMethodList()) {
@@ -1497,6 +1498,7 @@ public class Compiler {
                                 
 				// j� analisou "this" "." Id
 				if ( lexer.token == Symbol.LEFTPAR ) {
+                                    
                                     // "this" "." Id "(" [ ExpressionList ] ")"
                                     /*
                                      * Confira se a classe corrente possui um m�todo cujo nome �
@@ -1505,6 +1507,27 @@ public class Compiler {
                                     if (methodVariable == null)
                                         signalError.showError("Method '" + idList[1] + "' was not found in the public interface of '" + bClass + "' or its superclasses");
                                     exprList = this.realParameters();
+                                    
+                                    if (hasMethod) {
+                                        ParamList elements = methodVariable.getParam();
+                                        ArrayList<Expr> expr = exprList.getExpr();
+                                        boolean hasParam = false;
+                                        Iterator<Variable> itr = elements.elements();
+                                        while(itr.hasNext()) {
+                                            Variable v = itr.next();
+                                            for (Expr e : expr){
+                                                if (e.getType().getCname().compareTo(v.getType().getCname()) == 0) {
+                                                    hasParam = true;
+                                                }
+                                            }
+                                        }
+                                         if (!hasParam) {
+                                             signalError.showError("Type error: the type of the real parameter is not subclass of the type of the formal parameter");
+                                         }
+                                    }
+                                    
+                                   
+                                    
                                     if (!checkMethodParameters(exprList, methodVariable))
                                         signalError.showError("Wrong parameteters for method ''" + methodVariable.getName() + "'");
                                     return new PrimaryExpr(idList, exprList, methodVariable.getType());                                    
@@ -1548,6 +1571,7 @@ public class Compiler {
                                         }
                                         
 					exprList = this.realParameters();
+                                        
                                         if (!checkMethodParameters(exprList, methodVariable))
                                             signalError.showError("Wrong parameteters for method ''" + methodVariable.getName() +"'");
                                         return new PrimaryExpr(idList, exprList, methodVariable.getType());
