@@ -1255,7 +1255,7 @@ public class Compiler {
                             }while (kraClass != null);
 
                             if (!hasMethod){
-                                signalError.showError("Method '" + id + " was not found in superclass '"+bClass+"' or its superclasses");
+                                signalError.showError("Method '" + id + "' was not found in superclass '"+bClass+"' or its superclasses");
                             }
                         }
                         if ( lexer.token != Symbol.IDENT )
