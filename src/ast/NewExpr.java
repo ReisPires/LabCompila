@@ -22,7 +22,7 @@ public class NewExpr extends Expr{
 
     @Override
     public Type getType() {
-        throw new UnsupportedOperationException("Not supported yet."); //To change body of generated methods, choose Tools | Templates.
+        return this.newClass; //To change body of generated methods, choose Tools | Templates.
     }
     
 }

@@ -158,6 +158,7 @@ public class Compiler {
                             
                             if (aClass.getCname().compareTo(superclassName) != 0){
                                   aClass.setSuperclass(superClass);
+                                  
                             }
                             else{
                                 signalError.showError("Class '"+ aClass.getCname() +"' is inheriting from itself");
@@ -423,8 +424,7 @@ public class Compiler {
                                 StatementReturn returnStmt = (StatementReturn) stmts.getList().get(i);
                                 if (returnStmt.getExpr() == null || 
                                     (returnStmt.getExpr() != null && !returnStmt.getExpr().getType().getName().equals(type.getName())))
-                                   //System.out.println("aqui");
-                                     signalError.showError("Illegal 'return' statement. Method returns '" + type.getName() + "'");                        
+                                    signalError.showError("Illegal 'return' statement. Method returns '" + type.getName() + "'");                        
                             }
                         }
                     }
@@ -432,8 +432,7 @@ public class Compiler {
                 
                 // Check if 'return' is missing
                  if (!haveReturn && !"void".equals(type.getName()))
-                    signalError.showError("Missing 'return' statement in method '" + name + "'");  
-                
+                    signalError.showError("Missing 'return' statement in method '" + name + "'");                 
                 
 		if ( lexer.token != Symbol.RIGHTCURBRACKET ) signalError.showError("} expected");
 
@@ -682,8 +681,47 @@ public class Compiler {
                                     if(expr2 instanceof NullExpr){
                                         signalError.showError("Type error: 'null' cannot be assigned to a variable of a basic type");
                                     }
+                                    if (expr1.getType() instanceof TypeInt && (expr2.getType() instanceof TypeBoolean)) {
+                                        signalError.showError("Type error: value of the right-hand side is not subtype of the variable of the left-hand side.");
+                                    }
+                                    if (expr1.getType() instanceof TypeInt && expr2.getType() instanceof KraClass) {
+                                        signalError.showError("Type error: type of the left-hand side of the assignment is a basic type and the type of the right-hand side is a class");
+                                    }
                                 }
-                                
+                                if (expr1.getType() instanceof TypeBoolean) {
+                                    if (!(expr2.getType() instanceof TypeBoolean)) {
+                                        signalError.showError("'"+ expr2.getType().getCname() + "' cannot be assigned to 'boolean'");
+                                    }
+                                }
+                                if (expr1.getType() instanceof KraClass && !(expr2 instanceof NullExpr)) {
+                                    
+                                    if (expr1.getType().getCname().compareTo(expr2.getType().getCname()) != 0) {
+                                        if (expr2.getType() instanceof KraClass) {
+                                        KraClass bClass = symbolTable.getInGlobal(expr2.getType().getCname());
+
+                                            if (bClass.getSuperclass() == null) {
+                                                signalError.showError("Type error: type of the right-hand side of the assignment is not a subclass of the left-hand side");
+                                            }
+                                            else {
+                                               boolean haveSuper = false;
+                                               do{
+                                                if (bClass.getCname().compareTo(expr1.getType().getCname()) == 0){
+                                                    haveSuper = true;
+                                                }
+
+                                                bClass =  bClass.getSuperclass();
+
+                                                }while (bClass != null);
+                                               if (!haveSuper ) {
+                                                   signalError.showError("Type error: type of the right-hand side of the assignment is not a subclass of the left-hand side");
+                                               }
+                                            }
+                                        } 
+                                        else {
+                                            signalError.showError("Type error: the type of the expression of the right-hand side is a basic type and the type of the variable of the left-hand side is a class");
+                                        }
+                                    }
+                                }
 				if ( lexer.token != Symbol.SEMICOLON )
 					signalError.showError("';' expected", true);
 				else
@@ -742,12 +780,49 @@ public class Compiler {
 
 	private StatementReturn returnStatement() {
                 Variable var = (Variable) curMethod.pop();
+                
                 if (var.getType() instanceof TypeVoid){
                    signalError.showError("Illegal 'return' statement. Method returns 'void'");
                 }
+                
 		lexer.nextToken();
 		Expr e = expr();
-                System.out.println();
+                if (var.getType() instanceof KraClass) {
+                   KraClass aClass = symbolTable.getInGlobal(var.getType().getName());
+                   KraClass bClass = symbolTable.getInGlobal(e.getType().getName());
+                   
+                   if (aClass.getCname().compareTo(bClass.getCname()) != 0){
+                       
+                    if (aClass.getSuperclass() == null && bClass.getSuperclass() == null) {
+                         signalError.showError("Type error: type of the expression returned is not subclass of the method return type");
+                    }
+                    else {
+                          if (bClass.getSuperclass() != null && aClass.getSuperclass() == null) {
+                             boolean haveSuper = false;
+                             bClass =  symbolTable.getInGlobal(bClass.getSuperclass().getCname());
+
+                            /* fazer while ate que nao tenha mais super classe */
+                            do{
+                                if (bClass.getCname().compareTo(aClass.getCname()) == 0){
+                                    haveSuper = true;
+                                }
+
+                                bClass =  bClass.getSuperclass();
+
+                            }while (bClass != null);
+
+                            if (!haveSuper) {
+                                 signalError.showError("Type error: type of the expression returned is not subclass of the method return type");
+                               }
+                          }
+                          else {
+                              signalError.showError("Type error: type of the expression returned is not subclass of the method return type");
+                          }
+                          
+                       }
+
+                   }
+                }
 		if ( lexer.token != Symbol.SEMICOLON )
 			signalError.show(ErrorSignaller.semicolon_expected);
 		lexer.nextToken();
@@ -866,6 +941,77 @@ public class Compiler {
 				|| op == Symbol.LT || op == Symbol.GE || op == Symbol.GT ) {
 			lexer.nextToken();
 			Expr right = simpleExpr();
+                        
+                        if (left.getType() instanceof KraClass) {
+                           
+                            if (!(right instanceof NullExpr) && left.getType().getName().compareTo(right.getType().getName()) != 0) {
+                              KraClass aClass = symbolTable.getInGlobal(left.getType().getName()); 
+                              KraClass bClass = symbolTable.getInGlobal(right.getType().getName());
+                             
+                              if (aClass.getSuperclass() == null && bClass.getSuperclass() == null) {
+                                  
+                                  signalError.showError("Incompatible types cannot be compared with '"+ op.toString() +"' because the result will always be 'false'");
+                              }
+                              else {
+                                  if (aClass.getSuperclass() != null && bClass.getSuperclass() == null ){
+                                      boolean haveSuper = false;
+                                     aClass =  symbolTable.getInGlobal(aClass.getSuperclass().getCname());
+                                    
+                                    /* fazer while ate que nao tenha mais super classe */
+                                    do{
+                                        if (aClass.getCname().compareTo(bClass.getCname()) == 0){
+                                            haveSuper = true;
+                                        }
+    
+                                        aClass =  aClass.getSuperclass();
+                                       
+                                    }while (aClass != null);
+                                    
+                                    if (!haveSuper) {
+                                        signalError.showError("Incompatible types cannot be compared with '"+ op.toString() +"' because the result will always be 'false'");
+                                    }
+                                  }
+                                  else if (bClass.getSuperclass() != null && aClass.getSuperclass() == null) {
+                                     boolean haveSuper = false;
+                                     bClass =  symbolTable.getInGlobal(bClass.getSuperclass().getCname());
+                                    
+                                    /* fazer while ate que nao tenha mais super classe */
+                                    do{
+                                        if (bClass.getCname().compareTo(aClass.getCname()) == 0){
+                                            haveSuper = true;
+                                        }
+    
+                                        bClass =  bClass.getSuperclass();
+                                       
+                                    }while (bClass != null);
+                                    
+                                    if (!haveSuper) {
+                                        signalError.showError("Incompatible types cannot be compared with '"+ op.toString() +"' because the result will always be 'false'");
+                                    }
+                                  } 
+                                  else {
+                                    boolean haveSuper = false;
+                                    bClass =  symbolTable.getInGlobal(bClass.getSuperclass().getCname());
+                                    KraClass cClass =  symbolTable.getInGlobal(aClass.getSuperclass().getCname());
+                                    /* fazer while ate que nao tenha mais super classe */
+                                    do{
+                                       do {
+                                        if (cClass.getCname().compareTo(bClass.getCname()) == 0){
+                                            haveSuper = true;
+                                        }
+                                        cClass =  aClass.getSuperclass();
+                                       } while (cClass != null);
+                                       bClass =  bClass.getSuperclass();
+                                       cClass =  symbolTable.getInGlobal(aClass.getSuperclass().getCname());
+                                    }while (bClass != null);
+                                    
+                                    if (!haveSuper) {
+                                        signalError.showError("Incompatible types cannot be compared with '"+ op.toString() +"' because the result will always be 'false'");
+                                    }
+                                  }
+                              }
+                            }
+                        }
 			left = new CompositeExpr(left, op, right);
 		}
                 
