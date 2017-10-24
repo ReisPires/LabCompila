@@ -445,8 +445,9 @@ public class Compiler {
 
 	private LocalDec localDec() {
 		// LocalDec ::= Type IdList ";"
-
+                
 		Type type = type();
+                
                 VariableList varList = new VariableList();
                 
 		if ( lexer.token != Symbol.IDENT ) signalError.showError("Identifier expected");
@@ -513,7 +514,7 @@ public class Compiler {
 	private Type type() {
 		// Type ::= BasicType | Id
 		Type result;
-
+                
 		switch (lexer.token) {
                    
 		case VOID:
@@ -650,19 +651,20 @@ public class Compiler {
 	 * AssignExprLocalDec ::= Expression [ ``$=$'' Expression ] | LocalDec
 	 */
 	private AssignExprLocalDec assignExprLocalDec() {
-
+                //ok-sintatico12?
 		if ( lexer.token == Symbol.INT || lexer.token == Symbol.BOOLEAN
 				|| lexer.token == Symbol.STRING ||
 				// token � uma classe declarada textualmente antes desta
 				// instru��o
 				(lexer.token == Symbol.IDENT) && isType(lexer.getStringValue()) ) {
-                               
+                        
 			/*
 			 * uma declara��o de vari�vel. 'lexer.token' � o tipo da vari�vel
 			 *
 			 * AssignExprLocalDec ::= Expression [ ``$=$'' Expression ] | LocalDec
 			 * LocalDec ::= Type IdList ``;''
 			 */
+                        
 			return localDec();
 		}
 		else {
