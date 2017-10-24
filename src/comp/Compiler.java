@@ -432,8 +432,7 @@ public class Compiler {
                 
                 // Check if 'return' is missing
                  if (!haveReturn && !"void".equals(type.getName()))
-                    signalError.showError("Missing 'return' statement in method '" + name + "'"); 
-                
+                    signalError.showError("Missing 'return' statement in method '" + name + "'");                 
                 
 		if ( lexer.token != Symbol.RIGHTCURBRACKET ) signalError.showError("} expected");
 
@@ -723,6 +722,12 @@ public class Compiler {
                                         else {
                                             signalError.showError("Type error: the type of the expression of the right-hand side is a basic type and the type of the variable of the left-hand side is a class");
                                         }
+                                    }
+                                }
+                                if (expr2 != null) {
+                                    
+                                   if ( expr2.getType() instanceof TypeVoid) {
+                                           signalError.showError("Expression expected in the right-hand side of assignment");
                                     }
                                 }
 				if ( lexer.token != Symbol.SEMICOLON )
@@ -1068,11 +1073,44 @@ public class Compiler {
 			lexer.nextToken();
 			return new SignalExpr(op, factor());
 		}
-		else
-                       
-                        
+		else                                               
 			return factor();
 	}
+        
+        // Check if A is subclass of B 
+        private boolean checkInheritance(KraClass A, KraClass B) {
+            do {
+                if (A.getCname().equals(B.getCname())) return true;
+                B = B.getSuperclass();
+            } while (B != null);
+            return false;
+        }
+                
+        
+        private boolean checkMethodParameters(ExprList exprList, Variable variable) {
+            ParamList paramList = variable.getParam();
+            if (paramList == null && exprList == null)                
+                return true;                
+            
+            if (paramList != null && exprList != null) {
+                Iterator itr = paramList.elements();
+                int i;
+                for (i = 0; i < exprList.getExpr().size() && itr.hasNext(); ++i) {                   
+                        Expr e = exprList.getExpr().get(i);
+                        Variable v = (Variable)itr.next();
+                        if (e.getType() instanceof KraClass && v.getType() instanceof KraClass) {
+                            return checkInheritance((KraClass) e.getType(), (KraClass) v.getType());
+                        }
+                        else if (e.getType() != v.getType())
+                            return false;                        
+                }
+
+                if (i == exprList.getExpr().size() && !itr.hasNext())
+                    return true;
+            }
+            return false;
+        }
+        
 
 	/*
 	 * Factor ::= BasicValue | "(" Expression ")" | "!" Factor | "null" |
@@ -1095,9 +1133,14 @@ public class Compiler {
             
 		Expr anExpr;
 		ExprList exprList;
-		String messageName, id;
+		String id, className;
                 String bClass;
                 KraClass kraClass;
+                
+                boolean hasMethod, hasVar;
+                Variable methodVariable = null, varVariable = null;
+                
+                String[] idList = new String[3];                
                 
 		switch (lexer.token) {
 		// IntValue
@@ -1143,10 +1186,10 @@ public class Compiler {
 			if ( lexer.token != Symbol.IDENT )
 				signalError.showError("Identifier expected");
 
-			String className = lexer.getStringValue();
+			className = lexer.getStringValue();
 
 
-                // encontre a classe className in symbol table KraClass
+                        // encontre a classe className in symbol table KraClass
                         KraClass aClass = symbolTable.getInGlobal(className);
 
                         if ( aClass == null ) {
@@ -1180,55 +1223,53 @@ public class Compiler {
 			 */
 		case SUPER:
                     
-			// "super" "." Id "(" [ ExpressionList ] ")"
-                    
-                        boolean haveMethod = false;
+			// "super" "." Id "(" [ ExpressionList ] ")"                    
+                        hasMethod = false;                                                
+                        idList[0] = "super";                        
+                        
+                        // Verify if class has super 
                         bClass = (String) curClass.pop();
                         kraClass =  symbolTable.getInGlobal(bClass);
-                        curClass.push(bClass);
-                        
+                        curClass.push(bClass);                        
                         if (kraClass.getSuperclass()== null){
                             signalError.showError("'super' used in class '" + bClass + "' that does not have a superclass");
                         }
-                       
+                                               
 			lexer.nextToken();
 			if ( lexer.token != Symbol.DOT ) {
-				signalError.showError("'.' expected");
-			}
-			else
-				lexer.nextToken();
-                                id = lexer.getStringValue();
-                               
-                                if (kraClass.getSuperclass() != null){
-                                    kraClass =  symbolTable.getInGlobal(kraClass.getSuperclass().getCname());
-                                    
-                                    /* fazer while ate que nao tenha mais super classe */
-                                    do{
-                                        
-                                        for(Variable v : kraClass.getMethodList()){
-                                            
-                                            if (v.getName().compareTo(id) == 0){
-                                                if (v.getQualifier().compareTo("private") == 0) {
-                                                    signalError.showError("Method '"+ id + "' was not found in the public interface of '" + kraClass.getCname() + "' or its superclasses");
-                                                    break;
-                                                }
-                                                
-                                                haveMethod = true;
-                                            }
-                                           
+                            signalError.showError("'.' expected");
+                            break;
+			}                        
+                        lexer.nextToken();
+                        id = lexer.getStringValue();                            
+
+                        // Search for method
+                        if (kraClass.getSuperclass() != null){
+                            kraClass =  symbolTable.getInGlobal(kraClass.getSuperclass().getCname());
+                            /* fazer while ate que nao tenha mais super classe */
+                            do{
+                                for(Variable v : kraClass.getMethodList()){
+                                    if (v.getName().compareTo(id) == 0){
+                                        if (v.getQualifier().compareTo("private") == 0) {
+                                            signalError.showError("Method '"+ id + "' was not found in the public interface of '" + kraClass.getCname() + "' or its superclasses");
+                                            break;
                                         }
-                                        kraClass =  kraClass.getSuperclass();
-                                       
-                                    }while (kraClass != null);
-                                 
-                                    if (haveMethod == false){
-                                        signalError.showError("Method '" + id + "' was not found in superclass '"+bClass+"' or its superclasses");
+                                        methodVariable = v;
+                                        hasMethod = true;
+                                        break;
                                     }
                                 }
-			if ( lexer.token != Symbol.IDENT )
-				signalError.showError("Identifier expected");
-			messageName = lexer.getStringValue();
-                        System.out.println(messageName);
+                                kraClass =  kraClass.getSuperclass();
+                            }while (kraClass != null);
+
+                            if (!hasMethod){
+                                signalError.showError("Method '" + id + "' was not found in superclass '"+bClass+"' or its superclasses");
+                            }
+                        }
+                        if ( lexer.token != Symbol.IDENT )
+                            signalError.showError("Identifier expected");
+                        idList[1] = lexer.getStringValue();                             
+                        
                         
 			/*
 			 * para fazer as confer�ncias sem�nticas, procure por 'messageName'
@@ -1236,10 +1277,9 @@ public class Compiler {
 			 */
 			lexer.nextToken();
 			exprList = realParameters();
-                        
-                        /*Guardar tipo da classe???*/
-                       // return new PrimaryExpr(true);
-			break;
+                        if (!checkMethodParameters(exprList, methodVariable))
+                            signalError.showError("Wrong parameteters for method '" + methodVariable.getName() +"'");
+                        return new PrimaryExpr(idList, exprList, methodVariable.getType());						
 		case IDENT:
 			/*
           	 * PrimaryExpr ::=
@@ -1248,19 +1288,19 @@ public class Compiler {
           	 *                 Id "." Id "(" [ ExpressionList ] ")" |
           	 *                 Id "." Id "." Id "(" [ ExpressionList ] ")" |
 			 */
-
-			String firstId = lexer.getStringValue();
+			
+                        idList[0] = lexer.getStringValue();
                         
 			lexer.nextToken();
 			if ( lexer.token != Symbol.DOT ) {
                             // Id
                             // retorne um objeto da ASA que representa um identificador
-                                Variable variable = symbolTable.getInLocal(firstId);
-                                if(variable == null){
-                                   signalError.showError("Identifier '" + firstId + "' was not found");
-                                }
-                                   
-				return new PrimaryExpr(variable.getName(), variable.getType());
+                                varVariable = symbolTable.getInLocal(idList[0]);
+                                if(varVariable == null){
+                                   signalError.showError("Identifier '" + idList[0] + "' was not found");
+                                }                                
+                                
+				return new PrimaryExpr(idList, null, varVariable.getType());
 			}
 			else { // Id "."
                                 
@@ -1272,89 +1312,123 @@ public class Compiler {
 					// Id "." Id
                                         
 					lexer.nextToken();
-					id = lexer.getStringValue();
-                                        Variable variable = symbolTable.getInLocal(firstId);
+					idList[1] = lexer.getStringValue();                                        
+                                        Variable variable = symbolTable.getInLocal(idList[0]);
                                         if (!(variable.getType() instanceof KraClass)){
                                             signalError.showError("Message send to a non-object receiver");
+                                        }                                        
+                                        
+                                        
+                                        hasMethod = false;                                            
+                                        hasVar = false;                                        
+                                                                                                                    
+                                        kraClass = symbolTable.getInGlobal(variable.getType().getCname());
+                                        className = kraClass.getName();
+                                        bClass = (String) curClass.pop();
+                                        curClass.push(bClass);
+                                        
+                                        
+                                        // Verifica se o segundo Id é uma variável do primeiro Id e a captura 
+                                        if (className.equals(bClass) && kraClass.getInstanceVariableList() != null) {
+                                            Iterator itr = kraClass.getInstanceVariableList().elements();
+                                            while(itr.hasNext() && !hasVar) {
+                                                varVariable = (InstanceVariable)itr.next();                                                                  
+                                                if (varVariable.getName().equals(idList[1]))                                                   
+                                                    hasVar = true;                                                                             
+                                            }
                                         }
+                                        
+                                        // Verifica se o segundo Id é uma método do primeiro Id e o captura                                                                                                                                                                                                        
+                                        do {
+                                            for (Variable v : kraClass.getMethodList()) {
+                                                if (v.getName().compareTo(idList[1]) == 0){
+                                                    if (v.getQualifier().compareTo("private") == 0) {
+                                                        signalError.showError("Method '"+ idList[1] + "' was not found in the public interface of '" + className + "' or its superclasses");
+                                                        break;
+                                                    }
+                                                    methodVariable = v;
+                                                    hasMethod = true;
+                                                    break;
+                                                } 
+                                            }
+                                            kraClass = kraClass.getSuperclass();
+                                        } while (!hasMethod && kraClass != null);                                            
+                                        
+                                        if (!(hasMethod || hasVar))
+                                            signalError.showError("Identifier '" + idList[1] + "' was not found in the public interface of '" + className + "' or its superclasses");
+                                        
 					if ( lexer.token == Symbol.DOT ) {
-						// Id "." Id "." Id "(" [ ExpressionList ] ")"
-						/*
-						 * se o compilador permite vari�veis est�ticas, � poss�vel
-						 * ter esta op��o, como
-						 *     Clock.currentDay.setDay(12);
-						 * Contudo, se vari�veis est�ticas n�o estiver nas especifica��es,
-						 * sinalize um erro neste ponto.
-						 */
-                                                    lexer.nextToken();
-						if ( lexer.token != Symbol.IDENT )
-							signalError.showError("Identifier expected");
-						messageName = lexer.getStringValue();
-						lexer.nextToken();
-						exprList = this.realParameters();
-
+                                            // Id "." Id "." Id "(" [ ExpressionList ] ")"
+                                            /*
+                                             * se o compilador permite vari�veis est�ticas, � poss�vel
+                                             * ter esta op��o, como
+                                             *     Clock.currentDay.setDay(12);
+                                             * Contudo, se vari�veis est�ticas n�o estiver nas especifica��es,
+                                             * sinalize um erro neste ponto.
+                                             */
+                                                             
+                                            if (varVariable == null) {
+                                                signalError.showError("Variable '" + idList[1] + "' was not found in the public interface of '" + className);
+                                            }
+                                            
+                                            if (!(varVariable.getType() instanceof KraClass)){
+                                                signalError.showError("Message send to a non-object receiver");
+                                            }
+                                            
+                                            lexer.nextToken();                                                                                                                                    
+                                            if ( lexer.token != Symbol.IDENT )
+                                                signalError.showError("Identifier expected");
+                                            idList[2] = lexer.getStringValue();
+                                               
+                                            // Verifica se o terceiro Id eh um metodo do segundo Id
+                                            kraClass = symbolTable.getInGlobal(varVariable.getType().getCname());
+                                            className = kraClass.getName();
+                                            hasMethod = false;
+                                            do {
+                                                for(Variable v : kraClass.getMethodList()){
+                                                       if(v.getName().compareTo(idList[2]) == 0){
+                                                           if(v.getQualifier().compareTo("private") == 0){
+                                                               signalError.showError("Method '"+ v.getName() +"' was not found in the public interface of '" + className +"' or its superclasses");
+                                                           }
+                                                           hasMethod = true;
+                                                           methodVariable = v;
+                                                           break;
+                                                       }
+                                                   }
+                                                kraClass = kraClass.getSuperclass();
+                                            } while(!hasMethod && kraClass != null);
+                                            
+                                            if (!hasMethod) {
+                                                signalError.showError("Method '" + idList[2] + "' was not found in the public interface of '" + className + "'");
+                                            }
+                                            
+                                            lexer.nextToken();                                                                                                                                                                                
+                                            exprList = this.realParameters();  
+                                            if (!checkMethodParameters(exprList, methodVariable))
+                                                signalError.showError("Wrong parameteters for method '" + methodVariable.getName());
+                                            return new PrimaryExpr(idList, exprList, methodVariable.getType());
 					}
 					else if ( lexer.token == Symbol.LEFTPAR ) {
                                             
 						// Id "." Id "(" [ ExpressionList ] ")"
-						exprList = this.realParameters();
+                                                if (methodVariable == null)
+                                                    signalError.showError("Method '" + idList[1] + "' was not found in the public interface of '" + className +"' or its superclasses");
+						
+                                                exprList = this.realParameters();
 						/*
 						 * para fazer as confer�ncias sem�nticas, procure por
 						 * m�todo 'ident' na classe de 'firstId'
-						 */
-                                                Variable var = symbolTable.getInLocal(firstId);
+						*/                                                                                                                                                                                                                                                                                                                                                            
                                                 
-                                                if (var != null){
-                                                                                                     
-                                                   KraClass kClass =  symbolTable.getInGlobal(var.getType().getCname());
-                                                   boolean isPrivate = false;
-                                                   
-                                                   haveMethod = false;
-                                                   for(Variable v : kClass.getMethodList()){
-                                                       if(v.getName().compareTo(id) == 0){
-                                                           if(v.getQualifier().compareTo("private") == 0){
-                                                               signalError.showError("Method '"+ v.getName() +"' was not found in the public interface of '" + kClass.getName() +"' or its superclasses");
-                                                           }
-                                                           haveMethod = true;
-                                  
-                                                       }
-                                                   }
-                                                   
-                                                   System.out.println("Em Factor verificar parametros do metodo, se ele existir. E tambem superclasse");
-                                                   
-                                                   
-                                                   if (haveMethod == false){
-                                                       if(kClass.getSuperclass() == null){
-                                                        signalError.showError("Method '" + id  +"' was not found in class '" + var.getType().getCname() + "' or its superclasses" );
-                                                       }
-                                                       //procurar id nas superclasses
-                                                       else{
-                                                           KraClass superClasses = kClass.getSuperclass();
-                                                           
-                                                           //procurar em todas superclasses
-                                                           do{
-                                                               
-                                                               for(Variable v : superClasses.getMethodList()){
-                                                                   
-                                                                if(v.getName().compareTo(id) == 0){
-                                                                    haveMethod = true;
-                                                                }
-                                                            }
-                                                             superClasses = superClasses.getSuperclass();
-                                                           }while(superClasses != null);
-                                                         
-                                                           if(haveMethod == false){
-                                                               signalError.showError("Method '" + id  +"' was not found in class '" + var.getType().getCname() + "' or its superclasses" );
-                                                           }
-                                                       }
-                                                   }
-                                                   
-                                                }
-					}
+                                                if (!checkMethodParameters(exprList, methodVariable))
+                                                    signalError.showError("Wrong parameteters for method '" + methodVariable.getName() + "'");
+                                                return new PrimaryExpr(idList, exprList, methodVariable.getType());
+                                        }
 					else {
 						// retorne o objeto da ASA que representa Id "." Id
-                                                
-                                                
+                                                if (varVariable == null)                                                
+                                                    signalError.showError("Attribute " + idList[1] + "' was not found in the public interface of '" + className +"' or its superclasses");
+                                                return new PrimaryExpr(idList, null, varVariable.getType());                                                
 					}
 				}
 			}
@@ -1368,55 +1442,115 @@ public class Compiler {
           	 *                 "this" "." Id "(" [ ExpressionList ] ")"  |
           	 *                 "this" "." Id "." Id "(" [ ExpressionList ] ")"
 			 */
+                        idList[0] = "this";
 			lexer.nextToken();
+                        bClass = (String) curClass.pop();
+                        kraClass = symbolTable.getInGlobal(bClass);
+                        curClass.push(bClass);
+                        
 			if ( lexer.token != Symbol.DOT ) {
 				// only 'this'
 				// retorne um objeto da ASA que representa 'this'
 				// confira se n�o estamos em um m�todo est�tico
-                                /*Retorna apenas um this*/
-                                
-                                return new PrimaryExpr(true);
+                                /*Retorna apenas um this*/                                
+                                return new PrimaryExpr(idList, null, kraClass);
 			}
 			else {
                             
 				lexer.nextToken();
 				if ( lexer.token != Symbol.IDENT )
 					signalError.showError("Identifier expected");
-				id = lexer.getStringValue();
+				idList[1] = lexer.getStringValue();
 				lexer.nextToken();
+                                
+                                hasVar = false;
+                                hasMethod = false;
+                                
+                                // Verifica se o segundo Id é uma variável da c e a captura 
+                                if (kraClass.getInstanceVariableList() != null) {
+                                    Iterator itr = kraClass.getInstanceVariableList().elements();
+                                    while(itr.hasNext() && !hasVar) {
+                                        varVariable = (InstanceVariable)itr.next();                                                                  
+                                        if (varVariable.getName().equals(idList[1]))                                                   
+                                            hasVar = true;                                                                             
+                                    }
+                                }
+
+                                // Verifica se o segundo Id é uma método da classe o captura                                                                                                                                                                                                        
+                                do {
+                                    for (Variable v : kraClass.getMethodList()) {
+                                        if (v.getName().compareTo(idList[1]) == 0){
+                                            if (v.getQualifier().compareTo("private") == 0) {
+                                                signalError.showError("Method '"+ idList[1] + "' was not found in the public interface of '" + bClass + "' or its superclasses");
+                                                break;
+                                            }
+                                            methodVariable = v;
+                                            hasMethod = true;
+                                            break;
+                                        } 
+                                    }
+                                    kraClass = kraClass.getSuperclass();
+                                } while (!hasMethod && kraClass != null); 
+                                
+                                if (!(hasMethod || hasVar))
+                                    signalError.showError("Identifier '" + idList[1] + "' was not found in the public interface of '" + bClass + "' or its superclasses");
+                                
 				// j� analisou "this" "." Id
 				if ( lexer.token == Symbol.LEFTPAR ) {
                                     // "this" "." Id "(" [ ExpressionList ] ")"
                                     /*
                                      * Confira se a classe corrente possui um m�todo cujo nome �
                                      * 'ident' e que pode tomar os par�metros de ExpressionList
-                                     */
-                                    Variable var = symbolTable.getInLocal(id);
-
-                                    if (var == null){
-                                       String cClass = (String) curClass.pop();
-                                       KraClass kClass =  symbolTable.getInGlobal(cClass);
-                                       haveMethod = false;
-                                       for(Variable v : kClass.getMethodList()){
-                                           if(v.getName().compareTo(id) == 0){
-                                               haveMethod = true;
-                                           }
-                                       }
-                                       
-                                       curClass.push(cClass);
-                                       if (haveMethod == false && kClass.getSuperclass() == null){
-                                           signalError.showError("Method '" + id  +"' was not found in class '" + cClass + "' or its superclasses" );
-                                       }
-                                    }
-					exprList = this.realParameters();
+                                     */                                    
+                                    if (methodVariable == null)
+                                        signalError.showError("Method '" + idList[1] + "' was not found in the public interface of '" + bClass + "' or its superclasses");
+                                    exprList = this.realParameters();
+                                    if (!checkMethodParameters(exprList, methodVariable))
+                                        signalError.showError("Wrong parameteters for method ''" + methodVariable.getName() + "'");
+                                    return new PrimaryExpr(idList, exprList, methodVariable.getType());                                    
 				}
 				else if ( lexer.token == Symbol.DOT ) {
 					// "this" "." Id "." Id "(" [ ExpressionList ] ")"
+                                        if (varVariable == null) {
+                                            signalError.showError("Variable '" + idList[1] + "' was not found in the public interface of '" + bClass + "'");
+                                        }
+
+                                        if (!(varVariable.getType() instanceof KraClass)){
+                                            signalError.showError("Message send to a non-object receiver");
+                                        }
+                                        
 					lexer.nextToken();
 					if ( lexer.token != Symbol.IDENT )
-						signalError.showError("Identifier expected");
+                                            signalError.showError("Identifier expected");
 					lexer.nextToken();
+                                                                                
+                                        idList[2] = lexer.getStringValue();                                               
+                                        // Verifica se o terceiro Id eh um metodo do segundo Id
+                                        kraClass = symbolTable.getInGlobal(varVariable.getType().getCname());
+                                        className = kraClass.getName();
+                                        hasMethod = false;
+                                        do {
+                                            for(Variable v : kraClass.getMethodList()){
+                                                   if(v.getName().compareTo(idList[2]) == 0){
+                                                       if(v.getQualifier().compareTo("private") == 0){
+                                                           signalError.showError("Method '"+ v.getName() + "' was not found in the public interface of '" + className +"' or its superclasses");
+                                                       }
+                                                       hasMethod = true;
+                                                       methodVariable = v;
+                                                       break;
+                                                   }
+                                               }
+                                            kraClass = kraClass.getSuperclass();
+                                        } while(!hasMethod && kraClass != null);
+                                        
+                                        if (!hasMethod) {
+                                            signalError.showError("Method '" + idList[2] + "' was not found in the public interface of '" + className);
+                                        }
+                                        
 					exprList = this.realParameters();
+                                        if (!checkMethodParameters(exprList, methodVariable))
+                                            signalError.showError("Wrong parameteters for method ''" + methodVariable.getName() +"'");
+                                        return new PrimaryExpr(idList, exprList, methodVariable.getType());
 				}
 				else {
 					// retorne o objeto da ASA que representa "this" "." Id
@@ -1425,10 +1559,12 @@ public class Compiler {
 					 * vari�vel de inst�ncia 'ident'
 					 */
                                        
-					return new PrimaryExpr(true);
+					// retorne o objeto da ASA que representa Id "." Id
+                                        if (varVariable == null)                                                
+                                            signalError.showError("Attribute '" + idList[1] + "' was not found in the public interface of '" + bClass +"' or its superclasses");
+                                        return new PrimaryExpr(idList, null, varVariable.getType());                                                
 				}
-			}
-			break;
+			}			
 		default:
 			signalError.showError("Expression expected");
 		}
