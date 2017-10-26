@@ -11,6 +11,14 @@ public class StatementIf extends Statement {
     @Override
     public void genC(PW pw) {        
     }
+
+    public Statement getThenStmt() {
+        return thenStmt;
+    }
+
+    public Statement getElseStmt() {
+        return elseStmt;
+    }        
     
     Expr expr;
     Statement thenStmt;

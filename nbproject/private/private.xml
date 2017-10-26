@@ -3,14 +3,14 @@
     <editor-bookmarks xmlns="http://www.netbeans.org/ns/editor-bookmarks/2" lastBookmarkId="0"/>
     <open-files xmlns="http://www.netbeans.org/ns/projectui-open-files/2">
         <group>
-            <file>file:/C:/Users/Pedro%20Pires/Documents/NetBeansProjects/LabCompila/src/ast/InstanceVariable.java</file>
             <file>file:/C:/Users/Pedro%20Pires/Documents/NetBeansProjects/LabCompila/src/ast/Type.java</file>
             <file>file:/C:/Users/Pedro%20Pires/Documents/NetBeansProjects/LabCompila/src/comp/Compiler.java</file>
             <file>file:/C:/Users/Pedro%20Pires/Documents/NetBeansProjects/LabCompila/src/ast/PrimaryExpr.java</file>
-            <file>file:/C:/Users/Pedro%20Pires/Documents/NetBeansProjects/LabCompila/src/ast/ParamList.java</file>
-            <file>file:/C:/Users/Pedro%20Pires/Documents/NetBeansProjects/LabCompila/src/ast/Variable.java</file>
+            <file>file:/C:/Users/Pedro%20Pires/Documents/NetBeansProjects/LabCompila/src/ast/StatementIf.java</file>
+            <file>file:/C:/Users/Pedro%20Pires/Documents/NetBeansProjects/LabCompila/src/ast/CompositeStatement.java</file>
+            <file>file:/C:/Users/Pedro%20Pires/Documents/NetBeansProjects/LabCompila/src/ast/NewExpr.java</file>
             <file>file:/C:/Users/Pedro%20Pires/Documents/NetBeansProjects/LabCompila/src/ast/KraClass.java</file>
-            <file>file:/C:/Users/Pedro%20Pires/Documents/NetBeansProjects/LabCompila/src/ast/ExprList.java</file>
+            <file>file:/C:/Users/Pedro%20Pires/Documents/NetBeansProjects/LabCompila/src/comp/Comp.java</file>
         </group>
     </open-files>
 </project-private>
