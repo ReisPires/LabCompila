@@ -151,7 +151,7 @@ public class Compiler {
                         
                         KraClass superClass = symbolTable.getInGlobal(superclassName);
                         if (superClass == null){
-                            System.out.println("Erro");
+                            signalError.showError("Erro");
                         }
                         else{
                             KraClass aClass = symbolTable.getInGlobal(className);
@@ -280,7 +280,7 @@ public class Compiler {
                             Variable v = itr.next();
                             
                             if (v.getName().compareTo(variableName)==0){
-                                System.out.println("Instancia de variavel ja declarada");
+                                signalError.showError("Instance variable already declared");
                             }
                             else{
                                 instancias.addElement(new InstanceVariable(variableName, type));
@@ -293,6 +293,60 @@ public class Compiler {
 		lexer.nextToken();
                 
 	}
+        
+        private boolean checkReturnStatement(StatementReturn returnStmt, Type type) {            
+            Expr e = returnStmt.getExpr();
+            if (e == null)
+                signalError.showError("Illegal 'return' statement. Method returns '" + type.getName() + "'");           
+            if (e != null)
+                if (e.getType() instanceof KraClass && type instanceof KraClass) {
+                    if (!checkInheritance((KraClass)e.getType(), (KraClass)type))
+                        signalError.showError("Illegal 'return' statement. Method returns '" + type.getName() + "'");           
+                } else if (e.getType() != type)
+                        signalError.showError("Illegal 'return' statement. Method returns '" + type.getName() + "'");           
+                
+            return true;
+        }
+        
+        private boolean hasReturn(StatementIf ifStmt, Type type) {
+            boolean thenHasReturn = false, elseHasReturn = false;
+            
+            if (ifStmt.getThenStmt() instanceof StatementReturn) {
+                thenHasReturn = checkReturnStatement((StatementReturn)ifStmt.getThenStmt(), type);
+            } else if (ifStmt.getThenStmt() instanceof StatementIf) {
+                thenHasReturn = hasReturn((StatementIf)ifStmt.getThenStmt(), type);
+            } else if (ifStmt.getThenStmt() instanceof CompositeStatement) {
+                thenHasReturn = hasReturn(((CompositeStatement)ifStmt.getThenStmt()).getStatementList(), type);
+            }
+            
+            if (ifStmt.getElseStmt() instanceof StatementReturn) {                
+                elseHasReturn = checkReturnStatement((StatementReturn)ifStmt.getElseStmt(), type);
+            } else if (ifStmt.getElseStmt() instanceof StatementIf) {
+                elseHasReturn = hasReturn((StatementIf)ifStmt.getElseStmt(), type);
+            } else if (ifStmt.getElseStmt() instanceof CompositeStatement) {
+                elseHasReturn = hasReturn(((CompositeStatement)ifStmt.getElseStmt()).getStatementList(), type);
+            }
+            
+            return (thenHasReturn && elseHasReturn);
+        }
+        
+        private boolean hasReturn(StatementList stmts, Type type) {
+            // Iterates over statements            
+            if (stmts != null) {
+                for (int i = 0; i < stmts.getList().size(); ++i) {                    
+                    if (stmts.getList().get(i) != null){
+                        if (stmts.getList().get(i) instanceof  StatementReturn) {                                                       
+                            return checkReturnStatement((StatementReturn)stmts.getList().get(i), type);
+                        } else if (stmts.getList().get(i) instanceof StatementIf) {                         
+                            return hasReturn((StatementIf)stmts.getList().get(i), type);
+                        } else if (stmts.getList().get(i) instanceof CompositeStatement) {
+                            return hasReturn(((CompositeStatement)stmts.getList().get(i)).getStatementList(), type);
+                        }
+                    }
+                }
+            }
+            return false;
+        }
 
 	private void methodDec(Type type, String name, Symbol qualifier) {
 		/*
@@ -408,30 +462,11 @@ public class Compiler {
                 curMethod.push(var);
                 
                 StatementList stmts = statementList(); 
-    
-                System.out.println(name);
+                    
                 curMethod.pop();
-    
-               // Iterates over statements
-                Boolean haveReturn = false;
-                if (stmts != null) {
-                    for (int i = 0; i < stmts.getList().size(); ++i) {
-                        // Check if it's a 'return'
-                        if (stmts.getList().get(i) != null){
-                        
-                            if ("StatementReturn".equals(stmts.getList().get(i).getClass().getSimpleName())) {
-                                haveReturn = true;
-                                StatementReturn returnStmt = (StatementReturn) stmts.getList().get(i);
-                                if (returnStmt.getExpr() == null || 
-                                    (returnStmt.getExpr() != null && !returnStmt.getExpr().getType().getName().equals(type.getName())))
-                                    signalError.showError("Illegal 'return' statement. Method returns '" + type.getName() + "'");                        
-                            }
-                        }
-                    }
-                }
-                
+                                   
                 // Check if 'return' is missing
-                 if (!haveReturn && !"void".equals(type.getName()))
+                 if (!hasReturn(stmts, type) && type != Type.voidType)
                     signalError.showError("Missing 'return' statement in method '" + name + "'");                 
                 
 		if ( lexer.token != Symbol.RIGHTCURBRACKET ) signalError.showError("} expected");
@@ -594,11 +629,9 @@ public class Compiler {
 			readStatement();
 			break;
 		case WRITE:
-			writeStatement();
-			break;
+			return writeStatement(false);			
 		case WRITELN:
-			writelnStatement();
-			break;
+			return writeStatement(true);			
 		case IF:
 			return ifStatement();			
 		case BREAK:
@@ -655,7 +688,8 @@ public class Compiler {
 				|| lexer.token == Symbol.STRING ||
 				// token � uma classe declarada textualmente antes desta
 				// instru��o
-				(lexer.token == Symbol.IDENT) && isType(lexer.getStringValue()) ) {
+				(lexer.token == Symbol.IDENT) && isType(lexer.getStringValue()) && 
+                                symbolTable.getInLocal(lexer.getStringValue()) == null) {
                         
 			/*
 			 * uma declara��o de vari�vel. 'lexer.token' � o tipo da vari�vel
@@ -675,7 +709,7 @@ public class Compiler {
                         Expr expr2 = null;
                         
 			if ( lexer.token == Symbol.ASSIGN ) {
-				lexer.nextToken();
+			lexer.nextToken();
 				expr2 = expr();
                                 
                                 /* Verificar os tipos básicos */
@@ -735,7 +769,27 @@ public class Compiler {
 				else
 					lexer.nextToken();
 			}
-                        
+                                                
+                        if (expr1 instanceof PrimaryExpr && expr2 == null && ((PrimaryExpr)expr1).isMethod() && ((PrimaryExpr)expr1).getType() != Type.voidType) {                                                        
+                            String primaryExprName = ((PrimaryExpr)expr1).getIdList()[0];
+                            for (int i = 1; ((PrimaryExpr)expr1).getIdList()[i] != null; ++i)
+                                primaryExprName += "." + ((PrimaryExpr)expr1).getIdList()[i];                                           
+                            primaryExprName += "(";
+                            if (((PrimaryExpr)expr1).getExprList() != null) {
+                                ArrayList<Expr> e = ((PrimaryExpr)expr1).getExprList().getExpr();
+                                for (int i = 0; i < e.size(); ++i) {
+                                    if (e.get(i).getType() instanceof KraClass)
+                                        primaryExprName += e.get(i).getType().getCname();
+                                    else
+                                        primaryExprName += e.get(i).getType().getName();
+                                    if (i < e.size() - 1)
+                                        primaryExprName += ", ";
+                                }
+                            }
+                            primaryExprName += ")";
+                            signalError.showError("Message send '" + primaryExprName + "' returns a value that is not used");
+                        }
+                                    
                         return new AssignExpr(expr1, expr2);
 		}	
 	}
@@ -853,6 +907,25 @@ public class Compiler {
 
 			String name = lexer.getStringValue();
                         Variable v = symbolTable.getInLocal(name);
+                        if (v == null) {
+                            String classe = (String)curClass.pop();
+                            KraClass kraClass = symbolTable.getInGlobal(classe);
+                            InstanceVariableList instanceVariableList = kraClass.getInstanceVariableList();
+                            if (instanceVariableList != null) {
+                                Iterator itr = instanceVariableList.elements();
+                                while (itr.hasNext()) {
+                                    InstanceVariable instanceVariable = (InstanceVariable)itr.next();
+                                    if (instanceVariable.getName().equals(name)) {
+                                        v = (Variable)instanceVariable;
+                                        break;
+                                    }
+                                }
+                            }
+                            curClass.push(classe);
+                        }
+                        if (v == null) {
+                            signalError.showError("Variable '" + name + "' not found");
+                        }
                         if (v.getType() instanceof TypeBoolean){
                             signalError.showError("Command 'read' does not accept 'boolean' variables");
                         }
@@ -871,7 +944,7 @@ public class Compiler {
 	}
 
         //“write” “(” ExpressionList “)”
-	private void writeStatement() {
+	private StatementWrite writeStatement(boolean hasLineBreak) {
 
 		lexer.nextToken();
 		if ( lexer.token != Symbol.LEFTPAR ) signalError.showError("( expected");
@@ -896,19 +969,8 @@ public class Compiler {
 		if ( lexer.token != Symbol.SEMICOLON )
 			signalError.show(ErrorSignaller.semicolon_expected);
 		lexer.nextToken();
-	}
-
-	private void writelnStatement() {
-
-		lexer.nextToken();
-		if ( lexer.token != Symbol.LEFTPAR ) signalError.showError("( expected");
-		lexer.nextToken();
-		exprList();
-		if ( lexer.token != Symbol.RIGHTPAR ) signalError.showError(") expected");
-		lexer.nextToken();
-		if ( lexer.token != Symbol.SEMICOLON )
-			signalError.show(ErrorSignaller.semicolon_expected);
-		lexer.nextToken();
+                
+                return new StatementWrite(exprList, hasLineBreak);
 	}
 
 	private StatementBreak breakStatement() {
@@ -1081,8 +1143,8 @@ public class Compiler {
         private boolean checkInheritance(KraClass A, KraClass B) {
             do {
                 if (A.getCname().equals(B.getCname())) return true;
-                B = B.getSuperclass();
-            } while (B != null);
+                A = A.getSuperclass();
+            } while (A != null);
             return false;
         }
                 
@@ -1100,8 +1162,9 @@ public class Compiler {
                         Variable v = (Variable)itr.next();
                         if (e.getType() instanceof KraClass && v.getType() instanceof KraClass) {
                             return checkInheritance((KraClass) e.getType(), (KraClass) v.getType());
-                        }
-                        else if (e.getType() != v.getType())
+                        } else if (e.getType() == Type.undefinedType && v.getType() instanceof KraClass) {
+                            return true;
+                        } else if (e.getType() != v.getType())
                             return false;                        
                 }
 
@@ -1278,8 +1341,8 @@ public class Compiler {
 			lexer.nextToken();
 			exprList = realParameters();
                         if (!checkMethodParameters(exprList, methodVariable))
-                            signalError.showError("Wrong parameteters for method '" + methodVariable.getName() +"'");
-                        return new PrimaryExpr(idList, exprList, methodVariable.getType());						
+                            signalError.showError("Wrong parameters for method '" + methodVariable.getName() +"'");
+                        return new PrimaryExpr(idList, exprList, methodVariable.getType(), true);						
 		case IDENT:
 			/*
           	 * PrimaryExpr ::=
@@ -1300,7 +1363,7 @@ public class Compiler {
                                    signalError.showError("Identifier '" + idList[0] + "' was not found");
                                 }                                
                                 
-				return new PrimaryExpr(idList, null, varVariable.getType());
+				return new PrimaryExpr(idList, null, varVariable.getType(), false);
 			}
 			else { // Id "."
                                 
@@ -1405,8 +1468,8 @@ public class Compiler {
                                             lexer.nextToken();                                                                                                                                                                                
                                             exprList = this.realParameters();  
                                             if (!checkMethodParameters(exprList, methodVariable))
-                                                signalError.showError("Wrong parameteters for method '" + methodVariable.getName());
-                                            return new PrimaryExpr(idList, exprList, methodVariable.getType());
+                                                signalError.showError("Wrong parameters for method '" + methodVariable.getName());
+                                            return new PrimaryExpr(idList, exprList, methodVariable.getType(), true);
 					}
 					else if ( lexer.token == Symbol.LEFTPAR ) {
                                             
@@ -1421,14 +1484,14 @@ public class Compiler {
 						*/                                                                                                                                                                                                                                                                                                                                                            
                                                 
                                                 if (!checkMethodParameters(exprList, methodVariable))
-                                                    signalError.showError("Wrong parameteters for method '" + methodVariable.getName() + "'");
-                                                return new PrimaryExpr(idList, exprList, methodVariable.getType());
+                                                    signalError.showError("Wrong parameters for method '" + methodVariable.getName() + "'");
+                                                return new PrimaryExpr(idList, exprList, methodVariable.getType(), true);
                                         }
 					else {
 						// retorne o objeto da ASA que representa Id "." Id
                                                 if (varVariable == null)                                                
-                                                    signalError.showError("Attribute " + idList[1] + "' was not found in the public interface of '" + className +"' or its superclasses");
-                                                return new PrimaryExpr(idList, null, varVariable.getType());                                                
+                                                    signalError.showError("Variable " + idList[1] + "' was not found in the public interface of '" + className +"' or its superclasses");
+                                                return new PrimaryExpr(idList, null, varVariable.getType(), false);                                                
 					}
 				}
 			}
@@ -1454,7 +1517,7 @@ public class Compiler {
 				// retorne um objeto da ASA que representa 'this'
 				// confira se n�o estamos em um m�todo est�tico
                                 /*Retorna apenas um this*/                                
-                                return new PrimaryExpr(idList, null, kraClass);
+                                return new PrimaryExpr(idList, null, kraClass, false);
 			}
 			else {
                             
@@ -1481,10 +1544,10 @@ public class Compiler {
                                 do {
                                     for (Variable v : kraClass.getMethodList()) {
                                         if (v.getName().compareTo(idList[1]) == 0){
-                                            if (v.getQualifier().compareTo("private") == 0) {
-                                                signalError.showError("Method '"+ idList[1] + "' was not found in the public interface of '" + bClass + "' or its superclasses");
-                                                break;
-                                            }
+                                           // if (v.getQualifier().compareTo("private") == 0) {
+                                           //     signalError.showError("Method '"+ idList[1] + "' was not found in the public interface of '" + bClass + "' or its superclasses");
+                                           //     break;
+                                           // }
                                             methodVariable = v;
                                             hasMethod = true;
                                             break;
@@ -1511,27 +1574,31 @@ public class Compiler {
                                     
                                     if (hasMethod) {
                                         ParamList elements = methodVariable.getParam();
-                                        ArrayList<Expr> expr = exprList.getExpr();
-                                        boolean hasParam = false;
-                                        Iterator<Variable> itr = elements.elements();
-                                        while(itr.hasNext()) {
-                                            Variable v = itr.next();
-                                            for (Expr e : expr){
-                                                if (e.getType().getCname().compareTo(v.getType().getCname()) == 0) {
-                                                    hasParam = true;
+                                        if (!(elements == null && exprList == null)) {
+                                            ArrayList<Expr> expr = exprList.getExpr();
+                                            boolean hasParam = false;
+                                            Iterator<Variable> itr = elements.elements();
+                                            while(itr.hasNext()) {
+                                                Variable v = itr.next();
+                                                for (Expr e : expr){
+                                                    if (e.getType() == v.getType() || 
+                                                            checkInheritance((KraClass)e.getType(), (KraClass)v.getType())) {
+                                                        hasParam = true;
+                                                        break;
+                                                    }
                                                 }
                                             }
+                                             if (!hasParam) {
+                                                 signalError.showError("Type error: the type of the real parameter is not subclass of the type of the formal parameter");
+                                             }
                                         }
-                                         if (!hasParam) {
-                                             signalError.showError("Type error: the type of the real parameter is not subclass of the type of the formal parameter");
-                                         }
                                     }
                                     
                                    
                                    
                                     if (!checkMethodParameters(exprList, methodVariable))
-                                        signalError.showError("Wrong parameteters for method ''" + methodVariable.getName() + "'");
-                                    return new PrimaryExpr(idList, exprList, methodVariable.getType());                                    
+                                        signalError.showError("Wrong parameters for method ''" + methodVariable.getName() + "'");
+                                    return new PrimaryExpr(idList, exprList, methodVariable.getType(), true);                                    
 				}
 				else if ( lexer.token == Symbol.DOT ) {
 					// "this" "." Id "." Id "(" [ ExpressionList ] ")"
@@ -1574,8 +1641,8 @@ public class Compiler {
 					exprList = this.realParameters();
                               
                                         if (!checkMethodParameters(exprList, methodVariable))
-                                            signalError.showError("Wrong parameteters for method ''" + methodVariable.getName() +"'");
-                                        return new PrimaryExpr(idList, exprList, methodVariable.getType());
+                                            signalError.showError("Wrong parameters for method ''" + methodVariable.getName() +"'");
+                                        return new PrimaryExpr(idList, exprList, methodVariable.getType(), true);
 				}
 				else {
 					// retorne o objeto da ASA que representa "this" "." Id
@@ -1586,8 +1653,8 @@ public class Compiler {
                                        
 					// retorne o objeto da ASA que representa Id "." Id
                                         if (varVariable == null)                                                
-                                            signalError.showError("Attribute '" + idList[1] + "' was not found in the public interface of '" + bClass +"' or its superclasses");
-                                        return new PrimaryExpr(idList, null, varVariable.getType());                                                
+                                            signalError.showError("Variable '" + idList[1] + "' was not found in the public interface of '" + bClass +"' or its superclasses");
+                                        return new PrimaryExpr(idList, null, varVariable.getType(), false);                                                
 				}
 			}			
 		default:
