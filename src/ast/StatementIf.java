@@ -20,7 +20,7 @@ public class StatementIf extends Statement {
         return elseStmt;
     }        
     
-    Expr expr;
-    Statement thenStmt;
-    Statement elseStmt;
+    private Expr expr;
+    private Statement thenStmt;
+    private Statement elseStmt;
 }

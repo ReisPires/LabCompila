@@ -151,7 +151,7 @@ public class Compiler {
                         
                         KraClass superClass = symbolTable.getInGlobal(superclassName);
                         if (superClass == null){
-                            System.out.println("Erro");
+                            signalError.showError("Erro");
                         }
                         else{
                             KraClass aClass = symbolTable.getInGlobal(className);
@@ -280,7 +280,7 @@ public class Compiler {
                             Variable v = itr.next();
                             
                             if (v.getName().compareTo(variableName)==0){
-                                System.out.println("Instancia de variavel ja declarada");
+                                signalError.showError("Instance variable already declared");
                             }
                             else{
                                 instancias.addElement(new InstanceVariable(variableName, type));
@@ -462,8 +462,7 @@ public class Compiler {
                 curMethod.push(var);
                 
                 StatementList stmts = statementList(); 
-    
-                System.out.println(name);
+                    
                 curMethod.pop();
                                    
                 // Check if 'return' is missing
@@ -630,11 +629,9 @@ public class Compiler {
 			readStatement();
 			break;
 		case WRITE:
-			writeStatement();
-			break;
+			return writeStatement(false);			
 		case WRITELN:
-			writelnStatement();
-			break;
+			return writeStatement(true);			
 		case IF:
 			return ifStatement();			
 		case BREAK:
@@ -691,7 +688,8 @@ public class Compiler {
 				|| lexer.token == Symbol.STRING ||
 				// token � uma classe declarada textualmente antes desta
 				// instru��o
-				(lexer.token == Symbol.IDENT) && isType(lexer.getStringValue()) ) {
+				(lexer.token == Symbol.IDENT) && isType(lexer.getStringValue()) && 
+                                symbolTable.getInLocal(lexer.getStringValue()) == null) {
                         
 			/*
 			 * uma declara��o de vari�vel. 'lexer.token' � o tipo da vari�vel
@@ -909,6 +907,25 @@ public class Compiler {
 
 			String name = lexer.getStringValue();
                         Variable v = symbolTable.getInLocal(name);
+                        if (v == null) {
+                            String classe = (String)curClass.pop();
+                            KraClass kraClass = symbolTable.getInGlobal(classe);
+                            InstanceVariableList instanceVariableList = kraClass.getInstanceVariableList();
+                            if (instanceVariableList != null) {
+                                Iterator itr = instanceVariableList.elements();
+                                while (itr.hasNext()) {
+                                    InstanceVariable instanceVariable = (InstanceVariable)itr.next();
+                                    if (instanceVariable.getName().equals(name)) {
+                                        v = (Variable)instanceVariable;
+                                        break;
+                                    }
+                                }
+                            }
+                            curClass.push(classe);
+                        }
+                        if (v == null) {
+                            signalError.showError("Variable '" + name + "' not found");
+                        }
                         if (v.getType() instanceof TypeBoolean){
                             signalError.showError("Command 'read' does not accept 'boolean' variables");
                         }
@@ -927,7 +944,7 @@ public class Compiler {
 	}
 
         //“write” “(” ExpressionList “)”
-	private void writeStatement() {
+	private StatementWrite writeStatement(boolean hasLineBreak) {
 
 		lexer.nextToken();
 		if ( lexer.token != Symbol.LEFTPAR ) signalError.showError("( expected");
@@ -952,19 +969,8 @@ public class Compiler {
 		if ( lexer.token != Symbol.SEMICOLON )
 			signalError.show(ErrorSignaller.semicolon_expected);
 		lexer.nextToken();
-	}
-
-	private void writelnStatement() {
-
-		lexer.nextToken();
-		if ( lexer.token != Symbol.LEFTPAR ) signalError.showError("( expected");
-		lexer.nextToken();
-		exprList();
-		if ( lexer.token != Symbol.RIGHTPAR ) signalError.showError(") expected");
-		lexer.nextToken();
-		if ( lexer.token != Symbol.SEMICOLON )
-			signalError.show(ErrorSignaller.semicolon_expected);
-		lexer.nextToken();
+                
+                return new StatementWrite(exprList, hasLineBreak);
 	}
 
 	private StatementBreak breakStatement() {
@@ -1575,8 +1581,10 @@ public class Compiler {
                                             while(itr.hasNext()) {
                                                 Variable v = itr.next();
                                                 for (Expr e : expr){
-                                                    if (checkInheritance((KraClass)e.getType(), (KraClass)v.getType())) {
+                                                    if (e.getType() == v.getType() || 
+                                                            checkInheritance((KraClass)e.getType(), (KraClass)v.getType())) {
                                                         hasParam = true;
+                                                        break;
                                                     }
                                                 }
                                             }
