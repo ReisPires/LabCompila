@@ -14,11 +14,11 @@ public class StatementWrite extends Statement {
     @Override
     public void genKra(PW pw) {
         if (hasLineBreak)
-            pw.print("writeln(");
+            pw.print("writeln( ");
         else
-            pw.print("write(");
+            pw.print("write( ");
         exprList.genKra(pw);
-        pw.println(");");
+        pw.println(" );");
     }
     
     private ExprList exprList;
