@@ -32,6 +32,22 @@ public class Variable {
         return this.qualifier;
     }
     
+    public void genKra(PW pw) {
+        if (type instanceof KraClass) {
+            pw.print(qualifier + " " + type.getCname() + " " + name);
+        } else {
+            pw.print(qualifier + " " + type.getName() + " " + name);  
+        }
+        
+        if (paramList != null) {
+            pw.print("(");
+            pw.print(") {");
+            pw.print("}");
+        } else {
+            pw.println(";");
+        }
+    }
+    
     private String name;
     private Type type;
     private String qualifier;

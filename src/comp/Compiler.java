@@ -116,7 +116,7 @@ public class Compiler {
 		return new MetaobjectCall(name, metaobjectParamList);
 	}
 
-	private void classDec() {
+	private KraClass classDec() {
 		// Note que os m�todos desta classe n�o correspondem exatamente �s
 		// regras
 		// da gram�tica. Este m�todo classDec, por exemplo, implementa
@@ -138,8 +138,8 @@ public class Compiler {
 			signalError.show(ErrorSignaller.ident_expected);
 		String className = lexer.getStringValue();
                 
-                
-		symbolTable.putInGlobal(className, new KraClass(className));
+                KraClass kClass = new KraClass(className);
+		symbolTable.putInGlobal(className, kClass);
                 curClass.push(className);
 
 		lexer.nextToken();
@@ -170,6 +170,7 @@ public class Compiler {
 		if ( lexer.token != Symbol.LEFTCURBRACKET )
 			signalError.showError("{ expected", true);
 		lexer.nextToken();
+                                
                 
 		while (lexer.token == Symbol.PRIVATE || lexer.token == Symbol.PUBLIC) {
 
@@ -206,6 +207,8 @@ public class Compiler {
                         }
 			lexer.nextToken();
                         
+                        
+                        
 			if ( lexer.token == Symbol.LEFTPAR ){
                                 
 				methodDec(t, name, qualifier);
@@ -216,17 +219,20 @@ public class Compiler {
 			else
 				instanceVarDec(t, name);
                         
-		}
-
+		}                
+                
+		if ( lexer.token != Symbol.RIGHTCURBRACKET )
+			signalError.showError("'public', 'private' or '}\' expected");
+		
                 if ((className.compareTo("Program") == 0) && isRun == false ){
                     signalError.showError("Method 'run' was not found in class 'Program");
                 }
                 
-		if ( lexer.token != Symbol.RIGHTCURBRACKET )
-			signalError.showError("public/private or \"}\" expected");
-		lexer.nextToken();
+                lexer.nextToken();
                 
                 curClass.pop();
+                
+                return kClass;
 	}
 
 	private void instanceVarDec(Type type, String name) {
@@ -395,32 +401,35 @@ public class Compiler {
                 }
                 Variable var = new Variable(name, type, qualifier.toString(), params);
                 
-                ArrayList<Variable> methods = cClass.getMethodList();
+                ArrayList<MethodDec> methods = cClass.getMethodList();
                 Iterator<Variable> itr;
                 Iterator<Variable> parametros;
              
                 /* Possui super classe. Verificar se o metodo será redefinido */
                 if(superClasses != null) {
                     do {
-                        for (Variable v : superClasses.getMethodList()){
-                            
-                            if(v.getName().compareTo(name) == 0){
-                                /*comparar os parametro*/
-                                if (params != null && v.getParam() != null){
-                                    itr = v.getParam().elements();
-                                    parametros = params.elements();
-                                    while(itr.hasNext() && parametros.hasNext()) {
-                                       Variable element = itr.next();
-                                       Variable pElement = parametros.next();
-                                      
-                                       if(element.getType().getName() != pElement.getType().getName()){
-                                           signalError.showError("Method '"+ name +"' is being redefined in subclass '" + classe +"' with a signature different from the method of superclass '"+ superClasses.getCname() +"'");
-                                           break;
-                                       }
+                        ArrayList<MethodDec> superClassMethods = superClasses.getMethodList();
+                        if (superClassMethods != null) {
+                            for (MethodDec md : superClassMethods) {
+                                Variable v = md.getVariable();
+                                if(v.getName().compareTo(name) == 0){
+                                    /*comparar os parametro*/
+                                    if (params != null && v.getParam() != null){
+                                        itr = v.getParam().elements();
+                                        parametros = params.elements();
+                                        while(itr.hasNext() && parametros.hasNext()) {
+                                           Variable element = itr.next();
+                                           Variable pElement = parametros.next();
+
+                                           if(element.getType().getName() != pElement.getType().getName()){
+                                               signalError.showError("Method '"+ name +"' is being redefined in subclass '" + classe +"' with a signature different from the method of superclass '"+ superClasses.getCname() +"'");
+                                               break;
+                                           }
+                                        }
                                     }
-                                }
-                                if (v.getType() != type){
-                                    signalError.showError("Method '"+ name +"' of subclass '"+ classe +"' has a signature different from method inherited from superclass '" +superClasses.getCname() +"'");
+                                    if (v.getType() != type){
+                                        signalError.showError("Method '"+ name +"' of subclass '"+ classe +"' has a signature different from method inherited from superclass '" +superClasses.getCname() +"'");
+                                    }
                                 }
                             }
                         }
@@ -429,26 +438,15 @@ public class Compiler {
                     
                 }
                
-                if(methods.size() == 0){
-                    
-                    methods.add(var); 
-                    
-                }
-                else{
-                    
-                    for(Variable v : methods){
-                        
-                        if (v.getName().compareTo(var.getName()) != 0){
-                           
-                             methods.add(var);
-                             break;
-                        }
-                        else{
-                            signalError.showError("Method '" + name + "' is being redefined");
-                            break;
-                        }
+                for(MethodDec md : methods){
+                    Variable v = md.getVariable();
+                    if (v.getName().compareTo(var.getName()) == 0){
+                        signalError.showError("Method '" + name + "' is being redefined");
+                        break;
                     }
                 }   
+                
+                cClass.setMethodList(new MethodDec(var));
                 
 		if ( lexer.token != Symbol.RIGHTPAR ) signalError.showError(") expected");
 
@@ -462,7 +460,7 @@ public class Compiler {
                 curMethod.push(var);
                 
                 StatementList stmts = statementList(); 
-                    
+                
                 curMethod.pop();
                                    
                 // Check if 'return' is missing
@@ -472,9 +470,11 @@ public class Compiler {
 		if ( lexer.token != Symbol.RIGHTCURBRACKET ) signalError.showError("} expected");
 
 		lexer.nextToken();
-                
-                symbolTable.removeLocalIdent();
+                                                
+                symbolTable.removeLocalIdent();                                
 
+                cClass.getMethodList().get(cClass.getMethodList().size()-1).setStatementList(stmts);
+        
 	}
 
 	private LocalDec localDec() {
@@ -626,8 +626,7 @@ public class Compiler {
 		case RETURN:
 			return returnStatement();			
 		case READ:
-			readStatement();
-			break;
+			return readStatement();			
 		case WRITE:
 			return writeStatement(false);			
 		case WRITELN:
@@ -683,7 +682,6 @@ public class Compiler {
 	 * AssignExprLocalDec ::= Expression [ ``$=$'' Expression ] | LocalDec
 	 */
 	private AssignExprLocalDec assignExprLocalDec() {
-                //ok-sintatico12?
 		if ( lexer.token == Symbol.INT || lexer.token == Symbol.BOOLEAN
 				|| lexer.token == Symbol.STRING ||
 				// token � uma classe declarada textualmente antes desta
@@ -892,18 +890,24 @@ public class Compiler {
                 return new StatementReturn(e);
 	}
 
-	private void readStatement() {
+	private StatementRead readStatement() {
 		lexer.nextToken();
 		if ( lexer.token != Symbol.LEFTPAR ) signalError.showError("( expected");
 		lexer.nextToken();
+                
+                ArrayList<LeftValue> leftValues = null;
+                
 		while (true) {
+                        boolean hasThis = false;
+                        
 			if ( lexer.token == Symbol.THIS ) {
 				lexer.nextToken();
 				if ( lexer.token != Symbol.DOT ) signalError.showError(". expected");
 				lexer.nextToken();
+                                hasThis = true;
 			}
 			if ( lexer.token != Symbol.IDENT )
-				signalError.show(ErrorSignaller.ident_expected);
+				signalError.showError("Command 'read' without arguments");
 
 			String name = lexer.getStringValue();
                         Variable v = symbolTable.getInLocal(name);
@@ -926,14 +930,18 @@ public class Compiler {
                         if (v == null) {
                             signalError.showError("Variable '" + name + "' not found");
                         }
+                        
                         if (v.getType() instanceof TypeBoolean){
                             signalError.showError("Command 'read' does not accept 'boolean' variables");
                         }
+                        
+                        leftValues.add(new LeftValue(v, hasThis));
+                        
 			lexer.nextToken();
 			if ( lexer.token == Symbol.COMMA )
 				lexer.nextToken();
 			else
-				break;
+				break;                                                
 		}
 
 		if ( lexer.token != Symbol.RIGHTPAR ) signalError.showError(") expected");
@@ -941,6 +949,8 @@ public class Compiler {
 		if ( lexer.token != Symbol.SEMICOLON )
 			signalError.show(ErrorSignaller.semicolon_expected);
 		lexer.nextToken();
+                
+                return new StatementRead(leftValues);
 	}
 
         //“write” “(” ExpressionList “)”
@@ -1311,7 +1321,8 @@ public class Compiler {
                             kraClass =  symbolTable.getInGlobal(kraClass.getSuperclass().getCname());
                             /* fazer while ate que nao tenha mais super classe */
                             do{
-                                for(Variable v : kraClass.getMethodList()){
+                                for(MethodDec md : kraClass.getMethodList()){
+                                    Variable v = md.getVariable();
                                     if (v.getName().compareTo(id) == 0){
                                         if (v.getQualifier().compareTo("private") == 0) {
                                             signalError.showError("Method '"+ id + "' was not found in the public interface of '" + kraClass.getCname() + "' or its superclasses");
@@ -1403,7 +1414,8 @@ public class Compiler {
                                         
                                         // Verifica se o segundo Id é uma método do primeiro Id e o captura                                                                                                                                                                                                        
                                         do {
-                                            for (Variable v : kraClass.getMethodList()) {
+                                            for (MethodDec md : kraClass.getMethodList()) {
+                                                Variable v = md.getVariable();
                                                 if (v.getName().compareTo(idList[1]) == 0){
                                                     if (v.getQualifier().compareTo("private") == 0) {
                                                         signalError.showError("Method '"+ idList[1] + "' was not found in the public interface of '" + className + "' or its superclasses");
@@ -1448,7 +1460,8 @@ public class Compiler {
                                             className = kraClass.getName();
                                             hasMethod = false;
                                             do {
-                                                for(Variable v : kraClass.getMethodList()){
+                                                for(MethodDec md : kraClass.getMethodList()){
+                                                       Variable v = md.getVariable();
                                                        if(v.getName().compareTo(idList[2]) == 0){
                                                            if(v.getQualifier().compareTo("private") == 0){
                                                                signalError.showError("Method '"+ v.getName() +"' was not found in the public interface of '" + className +"' or its superclasses");
@@ -1542,7 +1555,8 @@ public class Compiler {
                     
                                 // Verifica se o segundo Id é uma método da classe o captura                                                                                                                                                                                                        
                                 do {
-                                    for (Variable v : kraClass.getMethodList()) {
+                                    for (MethodDec md : kraClass.getMethodList()) {
+                                        Variable v = md.getVariable();
                                         if (v.getName().compareTo(idList[1]) == 0){
                                            // if (v.getQualifier().compareTo("private") == 0) {
                                            //     signalError.showError("Method '"+ idList[1] + "' was not found in the public interface of '" + bClass + "' or its superclasses");
@@ -1621,7 +1635,8 @@ public class Compiler {
                                         className = kraClass.getName();
                                         hasMethod = false;
                                         do {
-                                            for(Variable v : kraClass.getMethodList()){
+                                            for(MethodDec md : kraClass.getMethodList()){
+                                                   Variable v = md.getVariable();
                                                    if(v.getName().compareTo(idList[2]) == 0){
                                                        if(v.getQualifier().compareTo("private") == 0){
                                                            signalError.showError("Method '"+ v.getName() + "' was not found in the public interface of '" + className +"' or its superclasses");

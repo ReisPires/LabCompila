@@ -13,7 +13,7 @@ import java.util.ArrayList;
  * end <br>
  * </code>
  * 
-   @author José
+   @author Josï¿½
    
  */
 public class MetaobjectCall {
@@ -29,6 +29,22 @@ public class MetaobjectCall {
 	public String getName() {
 		return name;
 	}
+        
+        public void genKra(PW pw) {
+            pw.print("@" + name);
+            if (paramList != null && paramList.size() != 0) pw.print("(");
+            for (int i = 0; i < paramList.size(); ++i) {
+                if (paramList.get(i) instanceof String) 
+                    pw.print("\"" + (String)paramList.get(i) + "\"");                    
+                else 
+                    pw.print(paramList.get(i).toString());                                       
+                
+                if(i != paramList.size() - 1) 
+                    pw.println(",");                    
+            }
+            if (paramList != null && paramList.size() != 0) pw.println(")");
+            else pw.println();
+        }
 
 
 	private String name;
