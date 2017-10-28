@@ -22,17 +22,27 @@ public class StatementIf extends Statement {
     
     @Override
     public void genKra(PW pw) {
-        pw.print("if (");
+        pw.printIdent("if (");
         expr.genKra(pw);
         pw.print(")");
-        if (!(thenStmt instanceof CompositeStatement))
+        if (!(thenStmt instanceof CompositeStatement)) {
             pw.println();
-        thenStmt.genKra(pw);                    
+            pw.add();
+        }
+        thenStmt.genKra(pw);  
+        if (!(thenStmt instanceof CompositeStatement)) {            
+            pw.sub();
+        }
         if (elseStmt != null) {
-            pw.print("else");            
-            if (!(elseStmt instanceof CompositeStatement))
+            pw.printIdent("else");            
+            if (!(elseStmt instanceof CompositeStatement)) {
                 pw.println();
+                pw.add();
+            }
             elseStmt.genKra(pw);                    
+            if (!(elseStmt instanceof CompositeStatement)) {             
+                pw.sub();
+            }
         }
     }
     

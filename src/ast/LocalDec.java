@@ -16,9 +16,9 @@ public class LocalDec extends AssignExprLocalDec {
     @Override
     public void genKra(PW pw) {
         if (type instanceof KraClass)
-            pw.print(type.getCname() + " ");
+            pw.printIdent(type.getCname() + " ");
         else
-            pw.print(type.getName() + " ");
+            pw.printIdent(type.getName() + " ");
         
         if (varList != null) {
             Iterator itr = varList.elements();

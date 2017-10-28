@@ -8,7 +8,7 @@ public class LiteralBoolean extends Expr {
 
     @Override
 	public void genC( PW pw, boolean putParenthesis ) {
-       pw.print( value ? "1" : "0" );
+       pw.printIdent( value ? "1" : "0" );
     }
 
     @Override

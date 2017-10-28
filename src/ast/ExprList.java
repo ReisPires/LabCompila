@@ -23,7 +23,7 @@ public class ExprList {
         for ( Expr e : exprList ) {
         	e.genC(pw, false);
             if ( --size > 0 )
-                pw.print(", ");
+                pw.printIdent(", ");
         }
     }
     

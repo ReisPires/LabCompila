@@ -8,7 +8,7 @@ public class StatementBreak extends Statement {
 
     @Override
     public void genKra(PW pw) {
-        pw.println("break;");
+        pw.printlnIdent("break;");
     }
     
 }

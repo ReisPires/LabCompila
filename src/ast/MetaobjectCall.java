@@ -31,18 +31,21 @@ public class MetaobjectCall {
 	}
         
         public void genKra(PW pw) {
-            pw.print("@" + name);
-            if (paramList != null && paramList.size() != 0) pw.print("(");
+            pw.printIdent("@" + name);
+            if (paramList != null && paramList.size() != 0) pw.printIdent("(");
             for (int i = 0; i < paramList.size(); ++i) {
-                if (paramList.get(i) instanceof String) 
-                    pw.print("\"" + (String)paramList.get(i) + "\"");                    
-                else 
-                    pw.print(paramList.get(i).toString());                                       
-                
-                if(i != paramList.size() - 1) 
-                    pw.println(",");                    
+                if (paramList.get(i) instanceof String) { 
+                    pw.printIdent("\"" + (String)paramList.get(i) + "\"");                    
+                    if(i != paramList.size() - 1) 
+                        pw.printlnIdent(",");                    
+                }
+                else {
+                    pw.printIdent(paramList.get(i).toString());                                       
+                    if(i != paramList.size() - 1) 
+                        pw.printIdent(",");                    
+                }                                
             }
-            if (paramList != null && paramList.size() != 0) pw.println(")");
+            if (paramList != null && paramList.size() != 0) pw.printlnIdent(")");
             else pw.println();
         }
 

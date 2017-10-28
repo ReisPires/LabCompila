@@ -34,9 +34,9 @@ public class Variable {
     
     public void genKra(PW pw) {
         if (type instanceof KraClass) {
-            pw.print(qualifier + " " + type.getCname() + " " + name);
+            pw.printIdent(qualifier + " " + type.getCname() + " " + name);
         } else {
-            pw.print(qualifier + " " + type.getName() + " " + name);  
+            pw.printIdent(qualifier + " " + type.getName() + " " + name);  
         }                
     }
     

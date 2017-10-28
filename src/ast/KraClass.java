@@ -46,11 +46,13 @@ public class KraClass extends Type {
     }
     
     public void genKra(PW pw) {
-        pw.print("class " + getCname() + " ");
+        pw.println();
+        pw.printIdent("class " + getCname());
         if (superclass != null) {
-            pw.print("extends " + superclass.getCname() + " ");
+            pw.printIdent(" extends " + superclass.getCname());
         }
-        pw.println("{");
+        pw.printlnIdent(" {");
+        pw.add();        
         if (instanceVariableList != null) {
             Iterator itr = instanceVariableList.elements();
             while(itr.hasNext()) {
@@ -58,10 +60,14 @@ public class KraClass extends Type {
                 instanceVariable.genKra(pw);
             }
         }
+        pw.println();
         for (MethodDec md : methodList) {
             md.genKra(pw);
         }
-        pw.println("}");
+        pw.sub();
+        pw.println();
+        pw.printlnIdent("}");
+        pw.println();
     }
     
    private String name;

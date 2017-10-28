@@ -33,9 +33,11 @@ public class MethodDec {
                     pw.print(", ");
             }
         }
-        pw.println(") {");                            
+        pw.println(") {");  
+        pw.add();
         statementList.genKra(pw);
-        pw.println("}");
+        pw.sub();
+        pw.printlnIdent("}");
     }
     
     private Variable variable;

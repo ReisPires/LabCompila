@@ -15,7 +15,7 @@ public class StatementRead extends Statement {
         
     @Override
     public void genKra(PW pw) {
-        pw.print("read(");
+        pw.printIdent("read(");
         for (int i = 0; i < leftValues.size(); ++i) {
             leftValues.get(i).genKra(pw);
             if (i < leftValues.size() - 1)

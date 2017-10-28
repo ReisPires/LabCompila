@@ -13,6 +13,8 @@ public class AssignExpr extends AssignExprLocalDec {
         
     @Override
     public void genKra(PW pw) {
+        if (expr1 instanceof PrimaryExpr)
+            pw.printIdent("");
         expr1.genKra(pw);
         if (expr2 != null) {
             pw.print(" = ");

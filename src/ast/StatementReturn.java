@@ -15,7 +15,7 @@ public class StatementReturn extends Statement {
     
     @Override
     public void genKra(PW pw) {
-        pw.print("return ");
+        pw.printIdent("return ");
         if (expr != null)
             expr.genKra(pw);
         pw.println(";");
