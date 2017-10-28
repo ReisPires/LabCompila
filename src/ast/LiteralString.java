@@ -14,5 +14,11 @@ public class LiteralString extends Expr {
         return Type.stringType;
     }
     
+    @Override
+    public void genKra(PW pw) {
+        pw.print("\"" + literalString + "\"");
+    }
+    
     private String literalString;
+    
 }

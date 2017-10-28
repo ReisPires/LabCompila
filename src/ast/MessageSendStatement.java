@@ -7,10 +7,13 @@ public class MessageSendStatement extends Statement {
       pw.printIdent("");
       // messageSend.genC(pw);
       pw.println(";");
-   }
+   }   
 
-   private MessageSend  messageSend;
+    @Override
+    public void genKra(PW pw) {        
+    }
 
+    private MessageSend  messageSend;
 }
 
 

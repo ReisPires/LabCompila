@@ -38,6 +38,15 @@ public class CompositeExpr extends Expr {
        else
             return Type.intType;
     }
+        
+    @Override
+    public void genKra(PW pw) {
+        left.genKra(pw);
+        if (right != null) {
+            pw.print(" " + oper.toString() + " ");
+            right.genKra(pw);
+        }
+    }
 
     private Expr left, right;
     private Symbol oper;
@@ -57,5 +66,5 @@ public class CompositeExpr extends Expr {
         arrayOper.put(Symbol.ASSIGN, "=");
         arrayOper.put(Symbol.AND, "&&");
         arrayOper.put(Symbol.OR, "||");
-    }
+    }    
 }

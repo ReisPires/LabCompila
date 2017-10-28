@@ -13,5 +13,13 @@ public class StatementReturn extends Statement {
     public void genC(PW pw) {        
     }
     
+    @Override
+    public void genKra(PW pw) {
+        pw.print("return ");
+        if (expr != null)
+            expr.genKra(pw);
+        pw.println(";");
+    }
+    
     private Expr expr;
 }

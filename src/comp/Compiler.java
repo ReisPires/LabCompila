@@ -34,10 +34,10 @@ public class Compiler {
 				metaobjectCallList.add(metaobjectCall());
 			}
                         
-			classDec();
+			kraClassList.add(classDec());
                         
 			while ( lexer.token == Symbol.CLASS )
-				classDec();
+				kraClassList.add(classDec());
                         
                         if(symbolTable.getInGlobal("Program") == null){
                             signalError.showError("Source code without a class 'Program'");
@@ -638,8 +638,7 @@ public class Compiler {
 		case WHILE:
 			return whileStatement();			
 		case SEMICOLON:
-			nullStatement();
-			break;
+			return nullStatement();			
 		case LEFTCURBRACKET:                    
 			return compositeStatement();			
 		default:
@@ -761,13 +760,9 @@ public class Compiler {
                                    if ( expr2.getType() instanceof TypeVoid) {
                                            signalError.showError("Expression expected in the right-hand side of assignment");
                                     }
-                                }
-				if ( lexer.token != Symbol.SEMICOLON )
-					signalError.showError("';' expected", true);
-				else
-					lexer.nextToken();
-			}
-                                                
+                                }				                                
+			}                                                           
+                        
                         if (expr1 instanceof PrimaryExpr && expr2 == null && ((PrimaryExpr)expr1).isMethod() && ((PrimaryExpr)expr1).getType() != Type.voidType) {                                                        
                             String primaryExprName = ((PrimaryExpr)expr1).getIdList()[0];
                             for (int i = 1; ((PrimaryExpr)expr1).getIdList()[i] != null; ++i)
@@ -787,6 +782,11 @@ public class Compiler {
                             primaryExprName += ")";
                             signalError.showError("Message send '" + primaryExprName + "' returns a value that is not used");
                         }
+                        
+                        if ( lexer.token != Symbol.SEMICOLON )
+                            signalError.showError("';' expected", true);
+			else
+                            lexer.nextToken();
                                     
                         return new AssignExpr(expr1, expr2);
 		}	
@@ -895,7 +895,7 @@ public class Compiler {
 		if ( lexer.token != Symbol.LEFTPAR ) signalError.showError("( expected");
 		lexer.nextToken();
                 
-                ArrayList<LeftValue> leftValues = null;
+                ArrayList<LeftValue> leftValues = new ArrayList<>();
                 
 		while (true) {
                         boolean hasThis = false;
@@ -997,8 +997,9 @@ public class Compiler {
             return new StatementBreak();
 	}
 
-	private void nullStatement() {
+	private StatementNull nullStatement() {
 		lexer.nextToken();
+                return new StatementNull();
 	}
 
 	private ExprList exprList() {
@@ -1497,7 +1498,7 @@ public class Compiler {
 						*/                                                                                                                                                                                                                                                                                                                                                            
                                                 
                                                 if (!checkMethodParameters(exprList, methodVariable))
-                                                    signalError.showError("Wrong parameters for method '" + methodVariable.getName() + "'");
+                                                    signalError.showError("Wrong parameters for method '" + methodVariable.getName() + "'");                                                
                                                 return new PrimaryExpr(idList, exprList, methodVariable.getType(), true);
                                         }
 					else {

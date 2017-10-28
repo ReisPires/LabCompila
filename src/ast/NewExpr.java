@@ -1,17 +1,7 @@
-/*
- * To change this license header, choose License Headers in Project Properties.
- * To change this template file, choose Tools | Templates
- * and open the template in the editor.
- */
 package ast;
 
-/**
- *
- * @author Asus
- */
-public class NewExpr extends Expr{
-    private KraClass newClass;
-    
+public class NewExpr extends Expr{    
+   
     public NewExpr(KraClass newClass ){
         this.newClass = newClass;
     }
@@ -24,5 +14,11 @@ public class NewExpr extends Expr{
     public Type getType() {
         return this.newClass; //To change body of generated methods, choose Tools | Templates.
     }
-    
+
+    @Override
+    public void genKra(PW pw) {
+        pw.print("new " + newClass.getCname() + "()");
+    }
+   
+    private KraClass newClass;
 }

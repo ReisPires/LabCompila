@@ -14,5 +14,10 @@ public class VariableExpr extends Expr {
         return v.getType();
     }
     
+    @Override
+    public void genKra(PW pw) {
+        pw.print(v.getName());
+    }
+    
     private Variable v;
 }

@@ -31,6 +31,21 @@ public class PrimaryExpr extends Expr{
         return isMethod;
     }       
     
+    @Override
+    public void genKra(PW pw) {
+        for (int i = 0; i < 3 && idList[i] != null; i++) {
+            pw.print(idList[i]);
+            if (i != 2 && idList[i+1] != null)
+                pw.print(".");
+        }
+        if (isMethod) {
+            pw.print("(");
+            if (exprList != null)
+                exprList.genKra(pw);
+            pw.print(")");
+        }
+    }
+    
     private String[] idList;
     private ExprList exprList;
     private Type type;    

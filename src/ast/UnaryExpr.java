@@ -33,7 +33,14 @@ public class UnaryExpr extends Expr {
 	public Type getType() {
 		return expr.getType();
 	}
+        
+        @Override
+        public void genKra(PW pw) {
+            pw.print(op.toString());
+            expr.genKra(pw);
+        }
 
 	private Expr	expr;
 	private Symbol	op;
+    
 }

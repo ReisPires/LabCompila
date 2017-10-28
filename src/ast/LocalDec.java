@@ -1,5 +1,7 @@
 package ast;
 
+import java.util.Iterator;
+
 public class LocalDec extends AssignExprLocalDec {
 
     public LocalDec (Type type, VariableList varList) {
@@ -11,6 +13,26 @@ public class LocalDec extends AssignExprLocalDec {
     public void genC(PW pw) {        
     }
     
+    @Override
+    public void genKra(PW pw) {
+        if (type instanceof KraClass)
+            pw.print(type.getCname() + " ");
+        else
+            pw.print(type.getName() + " ");
+        
+        if (varList != null) {
+            Iterator itr = varList.elements();
+            int i = 0;
+            while (itr.hasNext()) {
+                Variable v = (Variable)itr.next();
+                pw.print(v.getName());
+                if (i++ < varList.getSize() - 1)
+                    pw.print(", ");
+            }
+        }
+        pw.println(";");
+    }
+    
     private Type type;
-    private VariableList varList;
+    private VariableList varList;    
 }

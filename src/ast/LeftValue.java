@@ -7,6 +7,12 @@ public class LeftValue {
         this.hasThis = hasThis;
     }        
     
+    public void genKra(PW pw) {
+        if (hasThis)
+            pw.print("this.");
+        pw.print(v.getName());
+    }
+    
     private Variable v;
     private boolean hasThis;
 }

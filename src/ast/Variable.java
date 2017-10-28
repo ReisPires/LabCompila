@@ -37,15 +37,7 @@ public class Variable {
             pw.print(qualifier + " " + type.getCname() + " " + name);
         } else {
             pw.print(qualifier + " " + type.getName() + " " + name);  
-        }
-        
-        if (paramList != null) {
-            pw.print("(");
-            pw.print(") {");
-            pw.print("}");
-        } else {
-            pw.println(";");
-        }
+        }                
     }
     
     private String name;

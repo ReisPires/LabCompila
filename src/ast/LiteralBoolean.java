@@ -15,9 +15,19 @@ public class LiteralBoolean extends Expr {
 	public Type getType() {
         return Type.booleanType;
     }
+        
+    @Override
+    public void genKra(PW pw) {
+        if (value)
+            pw.print("true");
+        else
+            pw.print("false");
+    }
 
     public static LiteralBoolean True  = new LiteralBoolean(true);
     public static LiteralBoolean False = new LiteralBoolean(false);
 
     private boolean value;
+
+    
 }
