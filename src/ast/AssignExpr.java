@@ -10,6 +10,18 @@ public class AssignExpr extends AssignExprLocalDec {
     @Override
     public void genC(PW pw) {        
     }
+        
+    @Override
+    public void genKra(PW pw) {
+        if (expr1 instanceof PrimaryExpr)
+            pw.printIdent("");
+        expr1.genKra(pw);
+        if (expr2 != null) {
+            pw.print(" = ");
+            expr2.genKra(pw);
+        }
+        pw.println(";");
+    }
     
     private Expr expr1, expr2;
 }

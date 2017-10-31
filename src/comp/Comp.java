@@ -53,17 +53,17 @@ public class Comp {
                return ;
              }           
            if ( file.isDirectory() ) {
-        	   // compile all files in this directory
+        	   //compile all files in this directory
         	   File fileList[] = file.listFiles();
         	   for ( File f : fileList ) {
-        		   String filename = f.getName();
+        		   String filename = f.getName();                            
         		   int lastIndexDot = filename.lastIndexOf('.');
         		   String ext = filename.substring(lastIndexDot + 1);
         		   if ( ext.equalsIgnoreCase("kra") ) {
         			   numSourceFiles++;
         			   try {
         			       compileProgram(f, filename, outError);
-        			   } catch (RuntimeException e ) {
+        			   } catch (RuntimeException e ) {                                           
         				   System.out.println("Runtime exception");
         			   }
         			   catch (Throwable t) {

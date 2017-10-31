@@ -24,6 +24,21 @@ public class StatementList {
     public int getSize() {
         return this.statementList.size();
     }
+    
+    public void genKra(PW pw) {
+        boolean isLocalDec = false;
+        for (Statement stmt : statementList) {
+            if (stmt instanceof LocalDec) {
+                isLocalDec = true;
+            }
+            else if (isLocalDec) {
+                pw.println();
+                isLocalDec = false;
+            }
+            
+            stmt.genKra(pw);
+        }
+    }
 
     private ArrayList<Statement> statementList;
     

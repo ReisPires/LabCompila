@@ -14,17 +14,17 @@ public class CompositeExpr extends Expr {
     @Override
 	public void genC( PW pw, boolean putParenthesis ) {
         if ( putParenthesis )
-          pw.print("(");
+          pw.printIdent("(");
         left.genC(pw, true);
         String strSymbol = arrayOper.get(oper);
         if ( strSymbol == null ) {
-        	pw.println("internal error in CompositeExpr::genC");
+        	pw.printlnIdent("internal error in CompositeExpr::genC");
         }
         else
-            pw.print(" " + strSymbol + " ");
+            pw.printIdent(" " + strSymbol + " ");
         right.genC(pw, true);
         if ( putParenthesis )
-          pw.print(")");
+          pw.printIdent(")");
     }
 
     @Override
@@ -37,6 +37,15 @@ public class CompositeExpr extends Expr {
             return Type.booleanType;
        else
             return Type.intType;
+    }
+        
+    @Override
+    public void genKra(PW pw) {
+        left.genKra(pw);
+        if (right != null) {
+            pw.print(" " + oper.toString() + " ");
+            right.genKra(pw);
+        }
     }
 
     private Expr left, right;
@@ -57,5 +66,5 @@ public class CompositeExpr extends Expr {
         arrayOper.put(Symbol.ASSIGN, "=");
         arrayOper.put(Symbol.AND, "&&");
         arrayOper.put(Symbol.OR, "||");
-    }
+    }    
 }

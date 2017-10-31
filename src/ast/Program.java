@@ -14,6 +14,14 @@ public class Program {
 
 
 	public void genKra(PW pw) {
+            for (MetaobjectCall moc : metaobjectCallList) {
+                moc.genKra(pw);
+                pw.println();                
+            }
+            for (KraClass kraClass : classList) {
+                kraClass.genKra(pw);
+            }
+            pw.println();
 	}
 
 	public void genC(PW pw) {

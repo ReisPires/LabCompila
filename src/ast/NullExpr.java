@@ -10,4 +10,11 @@ public class NullExpr extends Expr {
       //# corrija
       return Type.undefinedType;
    }
+
+    @Override
+    public void genKra(PW pw) {
+        pw.print("null");
+    }
+   
+   
 }

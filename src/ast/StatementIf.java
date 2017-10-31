@@ -20,6 +20,32 @@ public class StatementIf extends Statement {
         return elseStmt;
     }        
     
+    @Override
+    public void genKra(PW pw) {
+        pw.printIdent("if (");
+        expr.genKra(pw);
+        pw.print(")");
+        if (!(thenStmt instanceof CompositeStatement)) {
+            pw.println();
+            pw.add();
+        }
+        thenStmt.genKra(pw);  
+        if (!(thenStmt instanceof CompositeStatement)) {            
+            pw.sub();
+        }
+        if (elseStmt != null) {
+            pw.printIdent("else");            
+            if (!(elseStmt instanceof CompositeStatement)) {
+                pw.println();
+                pw.add();
+            }
+            elseStmt.genKra(pw);                    
+            if (!(elseStmt instanceof CompositeStatement)) {             
+                pw.sub();
+            }
+        }
+    }
+    
     private Expr expr;
     private Statement thenStmt;
     private Statement elseStmt;

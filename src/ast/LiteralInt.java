@@ -16,6 +16,12 @@ public class LiteralInt extends Expr {
     public Type getType() {
         return Type.intType;
     }
+   
+    @Override
+    public void genKra(PW pw) {
+        pw.print(((Object)value).toString());
+    }
     
     private int value;
+   
 }

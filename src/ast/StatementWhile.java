@@ -11,6 +11,22 @@ public class StatementWhile extends Statement {
     public void genC(PW pw) {        
     }
     
+    @Override
+    public void genKra(PW pw) {
+        pw.printIdent("while (");
+        expr.genKra(pw);
+        pw.print(")");
+        if (!(stmt instanceof CompositeStatement)) {
+            pw.println();
+            pw.add();
+        }
+        if (stmt != null)
+            stmt.genKra(pw);        
+        if (!(stmt instanceof CompositeStatement)) {            
+            pw.sub();
+        }
+    }
+    
     Expr expr;
     Statement stmt;
 }

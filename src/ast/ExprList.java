@@ -23,6 +23,14 @@ public class ExprList {
         for ( Expr e : exprList ) {
         	e.genC(pw, false);
             if ( --size > 0 )
+                pw.printIdent(", ");
+        }
+    }
+    
+    public void genKra(PW pw) {
+        for(int i = 0; i < exprList.size(); ++i) {
+            exprList.get(i).genKra(pw);
+            if (i < exprList.size() - 1)
                 pw.print(", ");
         }
     }

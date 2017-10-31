@@ -10,7 +10,7 @@ public class StatementAssert extends Statement {
 	public void genC(PW pw) {
 		pw.printIdent("if ( !( ");
 		expr.genC(pw, false);
-		pw.println(" ) ) {");
+		pw.printlnIdent(" ) ) {");
 		pw.add();
 		pw.printlnIdent("puts(\"" + message +  "\");");
 		pw.sub();
@@ -29,8 +29,17 @@ public class StatementAssert extends Statement {
 	public String getMessage() {
 		return message;
 	}
+        
+        @Override
+        public void genKra(PW pw) {
+            pw.printIdent("assert ");
+            expr.genKra(pw);
+            pw.print(", \""  + message + "\";");
+        }
 
 	private Expr expr;
 	private int lineNumber;
 	private String message;
+
+    
 }

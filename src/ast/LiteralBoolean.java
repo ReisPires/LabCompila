@@ -8,16 +8,26 @@ public class LiteralBoolean extends Expr {
 
     @Override
 	public void genC( PW pw, boolean putParenthesis ) {
-       pw.print( value ? "1" : "0" );
+       pw.printIdent( value ? "1" : "0" );
     }
 
     @Override
 	public Type getType() {
         return Type.booleanType;
     }
+        
+    @Override
+    public void genKra(PW pw) {
+        if (value)
+            pw.print("true");
+        else
+            pw.print("false");
+    }
 
     public static LiteralBoolean True  = new LiteralBoolean(true);
     public static LiteralBoolean False = new LiteralBoolean(false);
 
     private boolean value;
+
+    
 }
