@@ -24,6 +24,8 @@ public class StatementWhile extends Statement {
             stmt.genKra(pw);        
         if (!(stmt instanceof CompositeStatement)) {            
             pw.sub();
+        } else {
+            pw.println();
         }
     }
     

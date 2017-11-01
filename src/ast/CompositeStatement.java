@@ -20,7 +20,7 @@ public class CompositeStatement extends Statement {
         pw.add();
         stmtList.genKra(pw);
         pw.sub();
-        pw.printlnIdent("}");
+        pw.printIdent("}");
     }
     
     private StatementList stmtList;

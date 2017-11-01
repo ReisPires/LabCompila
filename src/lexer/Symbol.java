@@ -11,6 +11,7 @@ public enum Symbol {
     COLON(":"),
     COMMA(","),
     DIV("/"),
+    //DO("do"),
     DOT("."),
     ELSE("else"),
     EOF("~eof"),
@@ -53,7 +54,7 @@ public enum Symbol {
     WHILE("while"),
     WRITE("write"),
     STATIC("static"),
-    WRITELN("writeln");
+    WRITELN("writeln");    
 
 	Symbol(String name) {
 		this.name = name;

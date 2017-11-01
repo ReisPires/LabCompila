@@ -140,7 +140,8 @@ public class Compiler {
                 
                 KraClass kClass = new KraClass(className);
 		symbolTable.putInGlobal(className, kClass);
-                curClass.push(className);
+                //curClass.push(className);
+                curClass = className;
 
 		lexer.nextToken();
 		if ( lexer.token == Symbol.EXTENDS ) {
@@ -151,24 +152,21 @@ public class Compiler {
                         
                         KraClass superClass = symbolTable.getInGlobal(superclassName);
                         if (superClass == null){
-                            signalError.showError("Erro");
+                            signalError.showError("Class " + superclassName + " not defined");
                         }
-                        else{
-                            KraClass aClass = symbolTable.getInGlobal(className);
-                            
-                            if (aClass.getCname().compareTo(superclassName) != 0){
-                                  aClass.setSuperclass(superClass);
-                                  
+                        else{                                                        
+                            if (className.compareTo(superclassName) != 0){
+                                  kClass.setSuperclass(superClass);                                  
                             }
                             else{
-                                signalError.showError("Class '"+ aClass.getCname() +"' is inheriting from itself");
+                                signalError.showError("Class '" + className + "' is inheriting from itself");
                             }
                         }
 
 			lexer.nextToken();
 		}
 		if ( lexer.token != Symbol.LEFTCURBRACKET )
-			signalError.showError("{ expected", true);
+			signalError.showError("'{'e expected", true);
 		lexer.nextToken();
                                 
                 
@@ -201,28 +199,24 @@ public class Compiler {
 			if ( lexer.token != Symbol.IDENT )
 				signalError.showError("Identifier expected");
 			String name = lexer.getStringValue();
+                                                
+			lexer.nextToken();                                                
                         
-                        if (name.compareTo("run") == 0){
-                            isRun = true;
-                        }
-			lexer.nextToken();
-                        
-                        
-                        
-			if ( lexer.token == Symbol.LEFTPAR ){
-                                
-				methodDec(t, name, qualifier);
-                                
+			if ( lexer.token == Symbol.LEFTPAR ) {
+                            if (name.compareTo("run") == 0){
+                                isRun = true;
+                            }
+                            methodDec(t, name, qualifier);    
                         }
 			else if ( qualifier != Symbol.PRIVATE )
-				signalError.showError("Attempt to declare a public instance variable");
+                            signalError.showError("Attempt to declare a public instance variable");
 			else
-				instanceVarDec(t, name);
+                            instanceVarDec(t, name);
                         
 		}                
                 
 		if ( lexer.token != Symbol.RIGHTCURBRACKET )
-			signalError.showError("'public', 'private' or '}\' expected");
+			signalError.showError("'public', 'private' or '}' expected");
 		
                 if ((className.compareTo("Program") == 0) && isRun == false ){
                     signalError.showError("Method 'run' was not found in class 'Program");
@@ -230,69 +224,55 @@ public class Compiler {
                 
                 lexer.nextToken();
                 
-                curClass.pop();
+                //curClass.pop();
+                curClass = "";
                 
                 return kClass;
 	}
 
 	private void instanceVarDec(Type type, String name) {
 		// InstVarDec ::= [ "static" ] "private" Type IdList ";"
-                String classe = (String) curClass.pop();
-                KraClass KClass = symbolTable.getInGlobal(classe);
+                //String classe = (String) curClass.pop();                
+                KraClass KClass = symbolTable.getInGlobal(curClass);
                 
-                curClass.push(classe);
-                if (KClass.getInstanceVariableList() == null) {
-                    
+                //curClass.push(classe);
+                
+                if (KClass.getInstanceVariableList() == null) {                    
                     InstanceVariableList instance = new InstanceVariableList();
-                    instance.addElement(new InstanceVariable(name, type));
-                   
-                    KClass.setInstanceVariableList(instance);
-                   
+                    instance.addElement(new InstanceVariable(name, type));                   
+                    KClass.setInstanceVariableList(instance);                   
                 }
                 else {
                     Iterator<InstanceVariable> itr;
-                    InstanceVariableList instancias = KClass.getInstanceVariableList();
-                  
+                    InstanceVariableList instancias = KClass.getInstanceVariableList();                  
                     itr = instancias.elements();
-                    boolean adc = false;
-                    while(itr.hasNext() && !adc){
-                        Variable v = itr.next();
-                      
-                        if (v.getName().compareTo(name)== 0){
-                            signalError.showError("Variable '" + name +"' is being redeclared");
-                           
+                                        
+                    while(itr.hasNext()){                                           
+                        if (itr.next().getName().compareTo(name)== 0){
+                            signalError.showError("Variable '" + name +"' is being redeclared");                           
                         }
-                        else{
-                           InstanceVariable instanceVariable = new InstanceVariable(name, type);
-                           instancias.addElement(instanceVariable);
-                           adc = true;
-                          // instancias.addElement();
-                        }
-                    }
-                }
+                    } 
+                    InstanceVariable instanceVariable = new InstanceVariable(name, type);
+                    instancias.addElement(instanceVariable);                   
+                }                                    
                 
-		while (lexer.token == Symbol.COMMA) {
-                    
-			lexer.nextToken();
-			if ( lexer.token != Symbol.IDENT )
-				signalError.showError("Identifier expected");
+		while (lexer.token == Symbol.COMMA) {                    
+                    lexer.nextToken();
+                    if ( lexer.token != Symbol.IDENT )
+			signalError.showError("Identifier expected");
                         
-			String variableName = lexer.getStringValue();
-                        Iterator<InstanceVariable> itr;
-                        InstanceVariableList instancias = KClass.getInstanceVariableList();
-                        
-                        itr = instancias.elements();
-                        while(itr.hasNext()){
-                            Variable v = itr.next();
-                            
-                            if (v.getName().compareTo(variableName)==0){
-                                signalError.showError("Instance variable already declared");
-                            }
-                            else{
-                                instancias.addElement(new InstanceVariable(variableName, type));
-                            }
+                    String variableName = lexer.getStringValue();
+                    Iterator<InstanceVariable> itr;
+                    InstanceVariableList instancias = KClass.getInstanceVariableList();                  
+                    itr = instancias.elements();                                        
+                    while(itr.hasNext()){                                           
+                        if (itr.next().getName().compareTo(variableName)== 0){
+                            signalError.showError("Variable '" + variableName +"' is being redeclared");                           
                         }
-			lexer.nextToken();
+                    } 
+                    InstanceVariable instanceVariable = new InstanceVariable(variableName, type);
+                    instancias.addElement(instanceVariable);                   
+                    lexer.nextToken();
 		}
 		if ( lexer.token != Symbol.SEMICOLON )
 			signalError.show(ErrorSignaller.semicolon_expected);
@@ -336,22 +316,22 @@ public class Compiler {
             return (thenHasReturn && elseHasReturn);
         }
         
-        private boolean hasReturn(StatementList stmts, Type type) {
-            // Iterates over statements            
+        private boolean hasReturn(StatementList stmts, Type type) {                    
+            boolean stmtHasReturn = false;
             if (stmts != null) {
-                for (int i = 0; i < stmts.getList().size(); ++i) {                    
+                for (int i = 0; i < stmts.getList().size() && !stmtHasReturn; ++i) {                    
                     if (stmts.getList().get(i) != null){
                         if (stmts.getList().get(i) instanceof  StatementReturn) {                                                       
-                            return checkReturnStatement((StatementReturn)stmts.getList().get(i), type);
+                            stmtHasReturn = checkReturnStatement((StatementReturn)stmts.getList().get(i), type);
                         } else if (stmts.getList().get(i) instanceof StatementIf) {                         
-                            return hasReturn((StatementIf)stmts.getList().get(i), type);
-                        } else if (stmts.getList().get(i) instanceof CompositeStatement) {
-                            return hasReturn(((CompositeStatement)stmts.getList().get(i)).getStatementList(), type);
+                            stmtHasReturn = hasReturn((StatementIf)stmts.getList().get(i), type);
+                        } else if (stmts.getList().get(i) instanceof CompositeStatement) {                            
+                            stmtHasReturn = hasReturn(((CompositeStatement)stmts.getList().get(i)).getStatementList(), type);
                         }
                     }
                 }
             }
-            return false;
+            return stmtHasReturn;
         }
 
 	private void methodDec(Type type, String name, Symbol qualifier) {
@@ -359,22 +339,21 @@ public class Compiler {
 		 * MethodDec ::= Qualifier Return Id "("[ FormalParamDec ] ")" "{"
 		 *                StatementList "}"
 		 */
-                
-                String classe;
+                                
                 boolean isProgramRun = false;
-                if( (classe = (String) curClass.pop()).compareTo("Program") == 0 && name.compareTo("run") == 0){
+                if( curClass.compareTo("Program") == 0 && name.compareTo("run") == 0){
 
                     if (qualifier == Symbol.PRIVATE){
-                        signalError.showError("Method '" +  name + "' of class '" + classe +"' cannot be private");
+                        signalError.showError("Method '" +  name + "' of class '" + curClass +"' cannot be private");
                     }
                     if (type != Type.voidType){
-                        signalError.showError("Method '" +  name + "' of class '" + classe + "' with a return value type different from 'void'");
+                        signalError.showError("Method '" +  name + "' of class '" + curClass + "' with a return value type different from 'void'");
                     }
                     isProgramRun = true;
                 }
 
                 /* Setar os metodos */
-                KraClass cClass = symbolTable.getInGlobal(classe);
+                KraClass cClass = symbolTable.getInGlobal(curClass);
                 
                 KraClass superClasses = cClass.getSuperclass();
                 InstanceVariableList instancias = cClass.getInstanceVariableList();
@@ -396,7 +375,7 @@ public class Compiler {
                     params = formalParamDec();
                     
                     if (isProgramRun == true && params.getSize() != 0){
-                        signalError.showError("Method '" +  name + "' of class '" + classe + "' cannot take parameters");
+                        signalError.showError("Method '" +  name + "' of class '" + curClass + "' cannot take parameters");
                     }
                 }
                 Variable var = new Variable(name, type, qualifier.toString(), params);
@@ -422,13 +401,13 @@ public class Compiler {
                                            Variable pElement = parametros.next();
 
                                            if(element.getType().getName() != pElement.getType().getName()){
-                                               signalError.showError("Method '"+ name +"' is being redefined in subclass '" + classe +"' with a signature different from the method of superclass '"+ superClasses.getCname() +"'");
+                                               signalError.showError("Method '"+ name +"' is being redefined in subclass '" + curClass +"' with a signature different from the method of superclass '"+ superClasses.getCname() +"'");
                                                break;
                                            }
                                         }
                                     }
                                     if (v.getType() != type){
-                                        signalError.showError("Method '"+ name +"' of subclass '"+ classe +"' has a signature different from method inherited from superclass '" +superClasses.getCname() +"'");
+                                        signalError.showError("Method '"+ name +"' of subclass '"+ curClass +"' has a signature different from method inherited from superclass '" +superClasses.getCname() +"'");
                                     }
                                 }
                             }
@@ -448,26 +427,29 @@ public class Compiler {
                 
                 cClass.setMethodList(new MethodDec(var));
                 
-		if ( lexer.token != Symbol.RIGHTPAR ) signalError.showError(") expected");
+		if ( lexer.token != Symbol.RIGHTPAR ) signalError.showError("')' expected");
 
 		lexer.nextToken();
-		if ( lexer.token != Symbol.LEFTCURBRACKET ) signalError.showError("{ expected");
+		if ( lexer.token != Symbol.LEFTCURBRACKET ) signalError.showError("'{' expected");
 
 		lexer.nextToken();
 
-                curClass.push(classe);
+                //curClass.push(classe);
+                //curClass = classe;
                 
-                curMethod.push(var);
+                //curMethod.push(var);
+                curMethod = var;
                 
                 StatementList stmts = statementList(); 
                 
-                curMethod.pop();
+                //curMethod.pop();
+                curMethod = null;
                                    
                 // Check if 'return' is missing
                  if (!hasReturn(stmts, type) && type != Type.voidType)
                     signalError.showError("Missing 'return' statement in method '" + name + "'");                 
                 
-		if ( lexer.token != Symbol.RIGHTCURBRACKET ) signalError.showError("} expected");
+		if ( lexer.token != Symbol.RIGHTCURBRACKET ) signalError.showError("'}' expected");
 
 		lexer.nextToken();
                                                 
@@ -513,8 +495,7 @@ public class Compiler {
                         }
 			lexer.nextToken();
 
-		}
-                // TALVEZ ISSO BUGUE!!!!!!!
+		}                
                 lexer.nextToken();
                 
                 return new LocalDec(type, varList);
@@ -550,7 +531,7 @@ public class Compiler {
 		Type result;
                 
 		switch (lexer.token) {
-                   
+                    
 		case VOID:
 			result = Type.voidType;
 			break;
@@ -569,10 +550,11 @@ public class Compiler {
 			// # corrija: fa�a uma busca na TS para buscar a classe
 			// IDENT deve ser uma classe. (No sentido de criar uma classe ou classe da ast?
                         
-                        KraClass classe = symbolTable.getInGlobal(lexer.getStringValue());
-                        
+                        KraClass classe = symbolTable.getInGlobal(lexer.getStringValue());                        
 			result = classe;
-                        
+                        if (result == null) {
+                            signalError.showError("Class '" + lexer.getStringValue() + "' not defined");
+                        }
 			break;
 		default:
 			signalError.showError("Type expected");
@@ -583,10 +565,12 @@ public class Compiler {
 	}
 
 	private CompositeStatement compositeStatement() {
-		lexer.nextToken();
+		if (lexer.token != Symbol.LEFTCURBRACKET)
+                    signalError.showError("'{' expected");
+                lexer.nextToken();
 		StatementList stmtList = statementList();
 		if ( lexer.token != Symbol.RIGHTCURBRACKET )
-			signalError.showError("} expected");
+			signalError.showError("'}' expected");
 		else
 			lexer.nextToken();
                 return new CompositeStatement(stmtList);
@@ -636,11 +620,13 @@ public class Compiler {
 		case BREAK:
 			return breakStatement();			
 		case WHILE:
-			return whileStatement();			
+			return whileStatement();	
+                //case DO:
+                        //return doWhileStatement();
 		case SEMICOLON:
 			return nullStatement();			
 		case LEFTCURBRACKET:                    
-			return compositeStatement();			
+			return compositeStatement();	                
 		default:
 			signalError.showError("Statement expected");
 		}
@@ -795,10 +781,10 @@ public class Compiler {
 	private ExprList realParameters() {
 		ExprList anExprList = null;
 
-		if ( lexer.token != Symbol.LEFTPAR ) signalError.showError("( expected");
+		if ( lexer.token != Symbol.LEFTPAR ) signalError.showError("'(' expected");
 		lexer.nextToken();
 		if ( startExpr(lexer.token) ) anExprList = exprList();
-		if ( lexer.token != Symbol.RIGHTPAR ) signalError.showError(") expected");
+		if ( lexer.token != Symbol.RIGHTPAR ) signalError.showError("')' expected");
 		lexer.nextToken();
 		return anExprList;
 	}
@@ -806,27 +792,53 @@ public class Compiler {
 	private Statement whileStatement() {
             whileStmt.push("true");
 		lexer.nextToken();
-		if ( lexer.token != Symbol.LEFTPAR ) signalError.showError("( expected");
+		if ( lexer.token != Symbol.LEFTPAR ) signalError.showError("'(' expected");
 		lexer.nextToken();
 		Expr e = expr();
                 if (!(e.getType() instanceof TypeBoolean)){
                     signalError.showError("non-boolean expression in 'while' command");
                 }
-		if ( lexer.token != Symbol.RIGHTPAR ) signalError.showError(") expected");
+		if ( lexer.token != Symbol.RIGHTPAR ) signalError.showError("')' expected");
 		lexer.nextToken();
 		Statement stmt = statement();
             whileStmt.pop();
             
             return new StatementWhile(e, stmt);
 	}
-
+        
+    /*    private Statement doWhileStatement() {
+            whileStmt.push("true");    
+                lexer.nextToken();
+                CompositeStatement compositeStatement = compositeStatement();
+                if (lexer.token != Symbol.WHILE)
+                    signalError.showError("'while' expected");
+                lexer.nextToken();
+                if (lexer.token != Symbol.LEFTPAR)
+                    signalError.showError("'(' expected");
+                lexer.nextToken();
+                Expr e = expr();
+                if (!(e.getType() instanceof TypeBoolean)){
+                    signalError.showError("non-boolean expression in 'do while' command");
+                }
+                if (lexer.token != Symbol.RIGHTPAR)
+                    signalError.showError("')' expected");
+                lexer.nextToken();
+                if (lexer.token != Symbol.SEMICOLON)
+                    signalError.showError("';' expected");
+                lexer.nextToken();
+            whileStmt.pop();
+            
+            return new StatementDoWhile(compositeStatement, e);
+        }
+    */
+        
 	private StatementIf ifStatement() {
 
 		lexer.nextToken();
-		if ( lexer.token != Symbol.LEFTPAR ) signalError.showError("( expected");
+		if ( lexer.token != Symbol.LEFTPAR ) signalError.showError("'(' expected");
 		lexer.nextToken();
 		Expr e = expr();
-		if ( lexer.token != Symbol.RIGHTPAR ) signalError.showError(") expected");
+		if ( lexer.token != Symbol.RIGHTPAR ) signalError.showError("')' expected");
 		lexer.nextToken();
 		Statement thenStmt = statement();
                 Statement elseStmt = null;
@@ -839,17 +851,21 @@ public class Compiler {
 	}
 
 	private StatementReturn returnStatement() {
-                Variable var = (Variable) curMethod.pop();
+                //Variable var = (Variable) curMethod.pop();
+                //Variable var = curMethod;
                 
-                if (var.getType() instanceof TypeVoid){
+                if (curMethod.getType() instanceof TypeVoid){
                    signalError.showError("Illegal 'return' statement. Method returns 'void'");
                 }
                 
 		lexer.nextToken();
 		Expr e = expr();
-                if (var.getType() instanceof KraClass) {
-                   KraClass aClass = symbolTable.getInGlobal(var.getType().getName());
+                if (curMethod.getType() instanceof KraClass) {
+                   KraClass aClass = symbolTable.getInGlobal(curMethod.getType().getName());
                    KraClass bClass = symbolTable.getInGlobal(e.getType().getName());
+                   
+                   if (bClass == null)
+                       signalError.showError("Type error: type of the expression returned is not a class");
                    
                    if (aClass.getCname().compareTo(bClass.getCname()) != 0){
                        
@@ -857,7 +873,7 @@ public class Compiler {
                          signalError.showError("Type error: type of the expression returned is not subclass of the method return type");
                     }
                     else {
-                          if (bClass.getSuperclass() != null && aClass.getSuperclass() == null) {
+                          if (bClass.getSuperclass() != null) {
                              boolean haveSuper = false;
                              bClass =  symbolTable.getInGlobal(bClass.getSuperclass().getCname());
 
@@ -886,13 +902,13 @@ public class Compiler {
 		if ( lexer.token != Symbol.SEMICOLON )
 			signalError.show(ErrorSignaller.semicolon_expected);
 		lexer.nextToken();
-                curMethod.push(var);
+                //curMethod.push(var);
                 return new StatementReturn(e);
 	}
 
 	private StatementRead readStatement() {
 		lexer.nextToken();
-		if ( lexer.token != Symbol.LEFTPAR ) signalError.showError("( expected");
+		if ( lexer.token != Symbol.LEFTPAR ) signalError.showError("'(' expected");
 		lexer.nextToken();
                 
                 ArrayList<LeftValue> leftValues = new ArrayList<>();
@@ -902,7 +918,7 @@ public class Compiler {
                         
 			if ( lexer.token == Symbol.THIS ) {
 				lexer.nextToken();
-				if ( lexer.token != Symbol.DOT ) signalError.showError(". expected");
+				if ( lexer.token != Symbol.DOT ) signalError.showError("'.' expected");
 				lexer.nextToken();
                                 hasThis = true;
 			}
@@ -912,8 +928,8 @@ public class Compiler {
 			String name = lexer.getStringValue();
                         Variable v = symbolTable.getInLocal(name);
                         if (v == null) {
-                            String classe = (String)curClass.pop();
-                            KraClass kraClass = symbolTable.getInGlobal(classe);
+                            //String classe = (String)curClass.pop();
+                            KraClass kraClass = symbolTable.getInGlobal(curClass);
                             InstanceVariableList instanceVariableList = kraClass.getInstanceVariableList();
                             if (instanceVariableList != null) {
                                 Iterator itr = instanceVariableList.elements();
@@ -925,10 +941,10 @@ public class Compiler {
                                     }
                                 }
                             }
-                            curClass.push(classe);
+                            //curClass.push(classe);
                         }
                         if (v == null) {
-                            signalError.showError("Variable '" + name + "' not found");
+                            signalError.showError("Variable '" + name + "' not declared");
                         }
                         
                         if (v.getType() instanceof TypeBoolean){
@@ -944,7 +960,7 @@ public class Compiler {
 				break;                                                
 		}
 
-		if ( lexer.token != Symbol.RIGHTPAR ) signalError.showError(") expected");
+		if ( lexer.token != Symbol.RIGHTPAR ) signalError.showError("')' expected");
 		lexer.nextToken();
 		if ( lexer.token != Symbol.SEMICOLON )
 			signalError.show(ErrorSignaller.semicolon_expected);
@@ -957,7 +973,7 @@ public class Compiler {
 	private StatementWrite writeStatement(boolean hasLineBreak) {
 
 		lexer.nextToken();
-		if ( lexer.token != Symbol.LEFTPAR ) signalError.showError("( expected");
+		if ( lexer.token != Symbol.LEFTPAR ) signalError.showError("'(' expected");
 		lexer.nextToken();
                 ExprList exprList = exprList();
                 ArrayList<Expr> arrayExpr = new ArrayList<Expr>();
@@ -1034,7 +1050,7 @@ public class Compiler {
                                   signalError.showError("Incompatible types cannot be compared with '"+ op.toString() +"' because the result will always be 'false'");
                               }
                               else {
-                                  if (aClass.getSuperclass() != null && bClass.getSuperclass() == null ){
+                                  if (aClass.getSuperclass() != null){
                                       boolean haveSuper = false;
                                      aClass =  symbolTable.getInGlobal(aClass.getSuperclass().getCname());
                                     
@@ -1237,7 +1253,7 @@ public class Compiler {
 		case LEFTPAR:
 			lexer.nextToken();
 			anExpr = expr();
-			if ( lexer.token != Symbol.RIGHTPAR ) signalError.showError(") expected");
+			if ( lexer.token != Symbol.RIGHTPAR ) signalError.showError("')' expected");
 			lexer.nextToken();
 			return new ParenthesisExpr(anExpr);
 
@@ -1272,9 +1288,9 @@ public class Compiler {
 
 
 			lexer.nextToken();
-			if ( lexer.token != Symbol.LEFTPAR ) signalError.showError("( expected");
+			if ( lexer.token != Symbol.LEFTPAR ) signalError.showError("'(' expected");
 			lexer.nextToken();
-			if ( lexer.token != Symbol.RIGHTPAR ) signalError.showError(") expected");
+			if ( lexer.token != Symbol.RIGHTPAR ) signalError.showError("')' expected");
 			lexer.nextToken();
 			/*
 			 * return an object representing the creation of an object
@@ -1302,11 +1318,11 @@ public class Compiler {
                         idList[0] = "super";                        
                         
                         // Verify if class has super 
-                        bClass = (String) curClass.pop();
-                        kraClass =  symbolTable.getInGlobal(bClass);
-                        curClass.push(bClass);                        
+                        //bClass = (String) curClass.pop();
+                        kraClass =  symbolTable.getInGlobal(curClass);
+                        //curClass.push(bClass);                        
                         if (kraClass.getSuperclass()== null){
-                            signalError.showError("'super' used in class '" + bClass + "' that does not have a superclass");
+                            signalError.showError("'super' used in class '" + curClass + "' that does not have a superclass");
                         }
                                                
 			lexer.nextToken();
@@ -1338,7 +1354,7 @@ public class Compiler {
                             }while (kraClass != null);
 
                             if (!hasMethod){
-                                signalError.showError("Method '" + id + "' was not found in superclass '"+bClass+"' or its superclasses");
+                                signalError.showError("Method '" + id + "' was not found in superclass '" + curClass + "' or its superclasses");
                             }
                         }
                         if ( lexer.token != Symbol.IDENT )
@@ -1399,12 +1415,12 @@ public class Compiler {
                                                                                                                     
                                         kraClass = symbolTable.getInGlobal(variable.getType().getCname());
                                         className = kraClass.getName();
-                                        bClass = (String) curClass.pop();
-                                        curClass.push(bClass);
+                                        //bClass = (String) curClass.pop();
+                                        //curClass.push(bClass);
                                         
                                         
                                         // Verifica se o segundo Id é uma variável do primeiro Id e a captura 
-                                        if (className.equals(bClass) && kraClass.getInstanceVariableList() != null) {
+                                        if (className.equals(curClass) && kraClass.getInstanceVariableList() != null) {
                                             Iterator itr = kraClass.getInstanceVariableList().elements();
                                             while(itr.hasNext() && !hasVar) {
                                                 varVariable = (InstanceVariable)itr.next();                                                                  
@@ -1522,9 +1538,9 @@ public class Compiler {
                         idList[0] = "this";
 
 			lexer.nextToken();
-                        bClass = (String) curClass.pop();
-                        kraClass = symbolTable.getInGlobal(bClass);
-                        curClass.push(bClass);
+                        //bClass = (String) curClass.pop();
+                        kraClass = symbolTable.getInGlobal(curClass);
+                        //curClass.push(bClass);
                         
 			if ( lexer.token != Symbol.DOT ) {
 				// only 'this'
@@ -1572,7 +1588,7 @@ public class Compiler {
                                 } while (!hasMethod && kraClass != null); 
                                 
                                 if (!(hasMethod || hasVar))
-                                    signalError.showError("Identifier '" + idList[1] + "' was not found in the public interface of '" + bClass + "' or its superclasses");
+                                    signalError.showError("Identifier '" + idList[1] + "' was not found in the public interface of '" + curClass + "' or its superclasses");
                                 
 				// j� analisou "this" "." Id
 				if ( lexer.token == Symbol.LEFTPAR ) {
@@ -1583,7 +1599,7 @@ public class Compiler {
                                      * 'ident' e que pode tomar os par�metros de ExpressionList
                                      */                                    
                                     if (methodVariable == null)
-                                        signalError.showError("Method '" + idList[1] + "' was not found in the public interface of '" + bClass + "' or its superclasses");
+                                        signalError.showError("Method '" + idList[1] + "' was not found in the public interface of '" + curClass + "' or its superclasses");
                                     exprList = this.realParameters();
 
                                     
@@ -1618,7 +1634,7 @@ public class Compiler {
 				else if ( lexer.token == Symbol.DOT ) {
 					// "this" "." Id "." Id "(" [ ExpressionList ] ")"
                                         if (varVariable == null) {
-                                            signalError.showError("Variable '" + idList[1] + "' was not found in the public interface of '" + bClass + "'");
+                                            signalError.showError("Variable '" + idList[1] + "' was not found in the public interface of '" + curClass + "'");
                                         }
 
                                         if (!(varVariable.getType() instanceof KraClass)){
@@ -1669,7 +1685,7 @@ public class Compiler {
                                        
 					// retorne o objeto da ASA que representa Id "." Id
                                         if (varVariable == null)                                                
-                                            signalError.showError("Variable '" + idList[1] + "' was not found in the public interface of '" + bClass +"' or its superclasses");
+                                            signalError.showError("Variable '" + idList[1] + "' was not found in the public interface of '" + curClass +"' or its superclasses");
                                         return new PrimaryExpr(idList, null, varVariable.getType(), false);                                                
 				}
 			}			
@@ -1705,7 +1721,9 @@ public class Compiler {
 	private SymbolTable		symbolTable;
 	private Lexer			lexer;
 	private ErrorSignaller	signalError;
-        private Stack curClass = new Stack();
+        //private Stack curClass = new Stack();
         private Stack whileStmt = new Stack();
-        private Stack curMethod = new Stack();
+        //private Stack curMethod = new Stack();
+        private String curClass;
+        private Variable curMethod;
 }
