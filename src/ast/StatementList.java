@@ -37,6 +37,8 @@ public class StatementList {
             }
             
             stmt.genKra(pw);
+            if (stmt instanceof CompositeStatement)
+                pw.println();
         }
     }
 

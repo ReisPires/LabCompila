@@ -28,10 +28,12 @@ public class StatementIf extends Statement {
         if (!(thenStmt instanceof CompositeStatement)) {
             pw.println();
             pw.add();
-        }
-        thenStmt.genKra(pw);  
+        }        
+        thenStmt.genKra(pw);          
         if (!(thenStmt instanceof CompositeStatement)) {            
             pw.sub();
+        } else {
+            pw.println();
         }
         if (elseStmt != null) {
             pw.printIdent("else");            
@@ -39,9 +41,11 @@ public class StatementIf extends Statement {
                 pw.println();
                 pw.add();
             }
-            elseStmt.genKra(pw);                    
+            elseStmt.genKra(pw);             
             if (!(elseStmt instanceof CompositeStatement)) {             
                 pw.sub();
+            } else {
+                pw.println();
             }
         }
     }
