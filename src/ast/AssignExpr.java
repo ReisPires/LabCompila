@@ -13,7 +13,7 @@ public class AssignExpr extends AssignExprLocalDec {
         
     @Override
     public void genKra(PW pw) {
-        if (expr1 instanceof PrimaryExpr)
+        if (expr1 instanceof MessageSendToVariable || expr1 instanceof MessageSendToSuper || expr1 instanceof MessageSendToSelf)
             pw.printIdent("");
         expr1.genKra(pw);
         if (expr2 != null) {

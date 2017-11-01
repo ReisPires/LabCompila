@@ -2,17 +2,52 @@ package ast;
 
 public class MessageSendToSuper extends MessageSend { 
 
+    public MessageSendToSuper(String id, ExprList exprList, Type type) {
+        this.id = id;
+        this.exprList = exprList;
+        this.type = type;
+    }   
+    
+    @Override
+    public boolean isMethod() {
+        return true;
+    }
+    
+    @Override
+    public String getPrimaryExprName() {
+        String primaryExprName = "super." + this.id + "(";                        
+        if (exprList != null) {
+            for (int i = 0; i < exprList.getExpr().size(); ++i) {                    
+                if (exprList.getExpr().get(i).getType() instanceof KraClass)
+                    primaryExprName += exprList.getExpr().get(i).getType().getCname();
+                else
+                    primaryExprName += exprList.getExpr().get(i).getType().getName();
+                if (i < exprList.getExpr().size() - 1) primaryExprName += ", ";
+            }
+        }
+        primaryExprName += ")";                
+        return primaryExprName;
+    }
+    
+    @Override
     public Type getType() { 
-        return null;
+        return this.type;
     }
 
+    @Override
     public void genC( PW pw, boolean putParenthesis ) {
         
     }
 
     @Override
     public void genKra(PW pw) {
-        throw new UnsupportedOperationException("Not supported yet."); //To change body of generated methods, choose Tools | Templates.
+        pw.print("super." + this.id + "(");                        
+        if (exprList != null)
+            exprList.genKra(pw);        
+        pw.print(")");                        
     }
     
+    private String id;
+    private ExprList exprList;
+    private Type type;
 }
