@@ -15,7 +15,33 @@ public class StatementIf extends Statement {
     }
     
     @Override
-    public void genC(PW pw) {        
+    public void genC(PW pw) { 
+        pw.printIdent("if (");
+        expr.genC(pw);
+        pw.print(")");
+        if (!(thenStmt instanceof CompositeStatement)) {
+            pw.println();
+            pw.add();
+        }        
+        thenStmt.genC(pw);          
+        if (!(thenStmt instanceof CompositeStatement)) {            
+            pw.sub();
+        } else {
+            pw.println();
+        }
+        if (elseStmt != null) {
+            pw.printIdent("else");            
+            if (!(elseStmt instanceof CompositeStatement)) {
+                pw.println();
+                pw.add();
+            }
+            elseStmt.genC(pw);             
+            if (!(elseStmt instanceof CompositeStatement)) {             
+                pw.sub();
+            } else {
+                pw.println();
+            }
+        }
     }
 
     public Statement getThenStmt() {

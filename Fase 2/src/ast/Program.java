@@ -31,6 +31,21 @@ public class Program {
 	}
 
 	public void genC(PW pw) {
+            pw.println("#include <iostream>");
+            pw.println("#include <string>");
+            pw.println("using namespace std;");
+                
+            for (KraClass kraClass : classList) {
+                kraClass.genC(pw);
+            }
+            
+            pw.println("int main() {");
+            pw.add();
+            pw.printlnIdent("Program *p = new Program();");
+            pw.printlnIdent("p->run();");
+            pw.printlnIdent("return 0;");
+            pw.sub();
+            pw.print("}");
 	}
 	
 	public ArrayList<KraClass> getClassList() {

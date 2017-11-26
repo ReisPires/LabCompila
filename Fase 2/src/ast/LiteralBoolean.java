@@ -13,8 +13,11 @@ public class LiteralBoolean extends Expr {
     }
 
     @Override
-	public void genC( PW pw, boolean putParenthesis ) {
-       pw.printIdent( value ? "1" : "0" );
+	public void genC( PW pw ) {
+        if (value)
+             pw.print("true");
+         else
+             pw.print("false");
     }
 
     @Override

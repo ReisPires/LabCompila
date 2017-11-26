@@ -1171,7 +1171,7 @@ public class Compiler {
                             return false;
                     }
                     else if (e.getType() != v.getType()) {
-                        if (!(e.getType() == Type.undefinedType && v.getType() instanceof KraClass))
+                        if (!(e.getType() == Type.undefinedType && (v.getType() instanceof KraClass || v.getType() instanceof TypeString)))
                             return false;                 
                     }
                 }

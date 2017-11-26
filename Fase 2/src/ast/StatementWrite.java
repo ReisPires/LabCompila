@@ -14,7 +14,12 @@ public class StatementWrite extends Statement {
     }
 
     @Override
-    public void genC(PW pw) {    
+    public void genC(PW pw) {
+        pw.printIdent("cout << ");        
+        exprList.genC(pw, true);
+        if (hasLineBreak)
+            pw.print("<< endl");
+        pw.println(";");
     }                    
     
     @Override

@@ -17,4 +17,10 @@ public class InstanceVariable extends Variable {
         super.genKra(pw);
         pw.println(";");
     }
+
+    @Override
+    public void genC(PW pw, boolean isLocalVarDec) {
+        super.genC(pw, false);
+        pw.println(";");
+    }
 }

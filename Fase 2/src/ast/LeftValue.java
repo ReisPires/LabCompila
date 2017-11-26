@@ -13,6 +13,12 @@ public class LeftValue {
         this.hasThis = hasThis;
     }        
     
+    public void genC(PW pw) {
+        if (hasThis)
+            pw.print("this->");
+        pw.print(v.getName());
+    }
+    
     public void genKra(PW pw) {
         if (hasThis)
             pw.print("this.");

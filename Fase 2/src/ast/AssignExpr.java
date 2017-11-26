@@ -15,6 +15,14 @@ public class AssignExpr extends AssignExprLocalDec {
     
     @Override
     public void genC(PW pw) {        
+        if (expr1 instanceof MessageSendToVariable || expr1 instanceof MessageSendToSuper || expr1 instanceof MessageSendToSelf)
+            pw.printIdent("");
+        expr1.genC(pw);
+        if (expr2 != null) {
+            pw.print(" = ");
+            expr2.genC(pw);
+        }
+        pw.println(";");
     }
         
     @Override

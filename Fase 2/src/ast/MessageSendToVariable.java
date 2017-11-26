@@ -81,8 +81,16 @@ public class MessageSendToVariable extends MessageSend {
     }
     
     @Override
-    public void genC( PW pw, boolean putParenthesis ) {
-        
+    public void genC( PW pw ) {
+        pw.print(firstId);
+        if (secondId != null) pw.print("->" + secondId);
+        if (thirdId != null) pw.print("->" + thirdId);
+        if (isMethod) { 
+            pw.print("(");
+            if (exprList != null)
+                exprList.genC(pw, false);            
+            pw.print(")");
+        }
     }
 
     @Override

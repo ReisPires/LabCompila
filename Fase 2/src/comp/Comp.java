@@ -260,7 +260,7 @@ public class Comp {
         	   
                FileOutputStream  outputStream;
                try {
-                  outputStream = new FileOutputStream(outputFileName + ".kra2");
+                  outputStream = new FileOutputStream(outputFileName + ".cpp");
                } catch ( IOException e ) {
                    String msg = "File " + outputFileName + " was not found";
                    outError.println(msg);
@@ -271,7 +271,7 @@ public class Comp {
         	   
               PW pw = new PW();
               pw.set(printWriter);
-              program.genKra( pw );
+              program.genC( pw );
               if ( printWriter.checkError() ) {
                  outError.println("There was an error in the output");
               }

@@ -12,8 +12,8 @@ public class NewExpr extends Expr{
         this.newClass = newClass;
     }
     @Override
-    public void genC(PW pw, boolean putParenthesis) {
-        throw new UnsupportedOperationException("Not supported yet."); //To change body of generated methods, choose Tools | Templates.
+    public void genC(PW pw) {
+        pw.print("new " + newClass.getCname() + "()");
     }
 
     @Override

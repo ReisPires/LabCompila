@@ -16,7 +16,11 @@ public class StatementReturn extends Statement {
     }
         
     @Override
-    public void genC(PW pw) {        
+    public void genC(PW pw) {   
+        pw.printIdent("return ");
+        if (expr != null)
+            expr.genC(pw);
+        pw.println(";");
     }
     
     @Override

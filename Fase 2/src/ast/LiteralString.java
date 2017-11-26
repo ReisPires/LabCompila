@@ -12,8 +12,8 @@ public class LiteralString extends Expr {
         this.literalString = literalString;
     }
     
-    public void genC( PW pw, boolean putParenthesis ) {
-        pw.printIdent(literalString);
+    public void genC( PW pw ) {
+         pw.print("\"" + literalString + "\"");
     }
     
     public Type getType() {

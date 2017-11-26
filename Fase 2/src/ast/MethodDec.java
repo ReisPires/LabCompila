@@ -46,6 +46,28 @@ public class MethodDec {
         pw.printlnIdent("}");
     }
     
+    public void genC(PW pw) {
+        variable.genC(pw, false);
+        pw.print("(");
+        if (variable.getParam() != null) {            
+            Iterator itr = variable.getParam().elements();
+            int i = 0;
+            while (itr.hasNext()) {                                
+                Parameter parameter = (Parameter) itr.next();
+                parameter.genC(pw);              
+                if (i++ < variable.getParam().getSize() - 1)
+                    pw.print(", ");
+            }
+        }
+        pw.println(") {");  
+        pw.add();
+        statementList.genC(pw);
+        pw.sub();
+        pw.printlnIdent("}");
+    }
+
+    
     private Variable variable;
     private StatementList statementList;
-}
+
+} 

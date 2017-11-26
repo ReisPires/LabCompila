@@ -41,8 +41,11 @@ public class MessageSendToSuper extends MessageSend {
     }
 
     @Override
-    public void genC( PW pw, boolean putParenthesis ) {
-        
+    public void genC( PW pw ) {
+        pw.print("super::" + this.id + "(");                        
+        if (exprList != null)
+            exprList.genC(pw, false);        
+        pw.print(")");                  
     }
 
     @Override

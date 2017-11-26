@@ -9,7 +9,8 @@ package ast;
 public class StatementBreak extends Statement {
         
     @Override
-    public void genC(PW pw) {        
+    public void genC(PW pw) {  
+        pw.printlnIdent("break;");
     }
 
     @Override

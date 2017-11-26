@@ -47,7 +47,24 @@ public class StatementList {
                 pw.println();
         }
     }
-
+    public void genC(PW pw) {
+       boolean isLocalDec = false;
+        for (Statement stmt : statementList) {
+            if (stmt instanceof LocalDec) {
+                isLocalDec = true;
+            }
+            else if (isLocalDec) {
+                pw.println();
+                isLocalDec = false;
+            }
+            
+            stmt.genC(pw);
+            if (stmt instanceof CompositeStatement)
+                pw.println();
+        }
+    }
     private ArrayList<Statement> statementList;
+
+    
     
 }

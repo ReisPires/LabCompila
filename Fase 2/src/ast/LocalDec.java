@@ -16,7 +16,22 @@ public class LocalDec extends AssignExprLocalDec {
     }
            
     @Override
-    public void genC(PW pw) {        
+    public void genC(PW pw) {     
+        pw.printIdent(type.getCname() + " ");
+        
+        if (varList != null) {
+            Iterator itr = varList.elements();
+            int i = 0;
+            while (itr.hasNext()) {
+                Variable v = (Variable)itr.next();
+                if (type instanceof TypeString || type instanceof KraClass)
+                    pw.print("*");
+                pw.print(v.getName());
+                if (i++ < varList.getSize() - 1)
+                    pw.print(", ");
+            }
+        }
+        pw.println(";");
     }
     
     @Override

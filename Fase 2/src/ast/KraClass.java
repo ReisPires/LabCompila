@@ -37,7 +37,8 @@ public class KraClass extends Type {
     public void setInstanceVariableList(InstanceVariableList instanceVariableList) {
         this.instanceVariableList = instanceVariableList;
     }
-
+    
+    
    
     public ArrayList<MethodDec> getMethodList() {
         return methodList;
@@ -76,13 +77,92 @@ public class KraClass extends Type {
         pw.println();
     }
     
+    public void genC(PW pw) {
+        boolean hasPublic = false, hasConstructor = false;
+        
+        pw.println();                
+        pw.printIdent("class " + getCname());
+        if (superclass != null) {
+            pw.printIdent(" : public " + superclass.getCname());
+        }
+        pw.printlnIdent(" {");
+        pw.add();        
+        
+        /* Exibe atributos e metodos privados */            
+        pw.add();
+        if (instanceVariableList != null) {            
+            Iterator itr = instanceVariableList.elements();
+            while(itr.hasNext()) {
+                InstanceVariable instanceVariable = (InstanceVariable)itr.next();
+                if (instanceVariable.getQualifier().compareTo("private") == 0) {
+                    instanceVariable.genC(pw, false);
+                }
+                else {
+                    hasPublic = true;
+                }               
+                if (!hasConstructor && instanceVariable.getType() instanceof TypeString){
+                    hasConstructor = true;
+                }
+            }
+            pw.println();
+        }        
+        for (MethodDec md : methodList) {
+            if (md.getVariable().getQualifier().compareTo("private") == 0) {
+                md.genC(pw);
+            } 
+            else {
+                hasPublic = true;
+            }
+        }
+        pw.sub();
+        
+        /* Exibe atributos e metodos publicos */    
+        if (hasPublic || (this.superclass != null) || hasConstructor) {
+           pw.printlnIdent("public: ");
+           pw.add();
+           /* Super */
+           if (this.superclass != null) {
+               pw.printlnIdent("typedef " + this.superclass.getName() + " super;");               
+           }                        
+           
+           /* Construtor */
+           if (hasConstructor) {
+               pw.printlnIdent(getCname() + "() {");
+               pw.add();               
+               Iterator itr = instanceVariableList.elements();
+               while(itr.hasNext()) {
+                   InstanceVariable instanceVariable = (InstanceVariable)itr.next();
+                   if (instanceVariable.getType() instanceof TypeString) {
+                       pw.printlnIdent("this->" + instanceVariable.getName() + " = new string();");
+                   }                      
+               }               
+               pw.sub();
+               pw.printlnIdent("}");
+           }
+           
+           /* Metodos */
+           for (MethodDec md : methodList) {               
+               md.genC(pw);               
+           }
+           pw.sub();
+        }
+        
+        pw.sub();
+        pw.println();
+        pw.printlnIdent("};");
+        pw.println();
+    }
+    
    private String name;
    private KraClass superclass;
    private InstanceVariableList instanceVariableList;
    private ArrayList<MethodDec> methodList = new ArrayList<MethodDec>(); 
+   
    // private MethodList publicMethodList, privateMethodList;
    // m�todos p�blicos get e set para obter e iniciar as vari�veis acima,
    // entre outros m�todos
+
+  
 
 
 }

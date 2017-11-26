@@ -23,13 +23,20 @@ public class ExprList {
         return this.exprList;
     }
     
-    public void genC( PW pw ) {
+    public void genC( PW pw, boolean isOutput ) {
 
         int size = exprList.size();
         for ( Expr e : exprList ) {
-        	e.genC(pw, false);
+                if (e instanceof LiteralString && !isOutput)
+                    pw.print("new string(");                
+                e.genC(pw);
+                if (e instanceof LiteralString && !isOutput)
+                    pw.print(")");                
             if ( --size > 0 )
-                pw.printIdent(", ");
+                if (isOutput)
+                    pw.print(" << ");
+                else
+                    pw.print(", ");
         }
     }
     

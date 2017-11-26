@@ -21,4 +21,13 @@ public class Parameter extends Variable {
             pw.print(super.getType().getName() + " " + super.getName());  
         }
     }
+        
+    public void genC(PW pw) {
+        if (super.getType() instanceof TypeString || super.getType() instanceof KraClass) {
+            pw.print(super.getType().getCname() + " *" + super.getName());              
+        }        
+        else {
+            pw.print(super.getType().getCname() + " " + super.getName());              
+        }
+    }
 }

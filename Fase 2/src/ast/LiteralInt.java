@@ -15,8 +15,8 @@ public class LiteralInt extends Expr {
     public int getValue() {
         return value;
     }
-    public void genC( PW pw, boolean putParenthesis ) {
-        pw.printIdent("" + value);
+    public void genC( PW pw ) {
+        pw.print(((Object)value).toString());
     }
     
     public Type getType() {

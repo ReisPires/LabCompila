@@ -12,10 +12,10 @@ public class ParenthesisExpr extends Expr {
         this.expr = expr;
     }
     
-    public void genC( PW pw, boolean putParenthesis ) {
-        pw.printIdent("(");
-        expr.genC(pw, false);
-        pw.printIdent(")");
+    public void genC( PW pw ) {
+        pw.print("(");
+        expr.genC(pw);
+        pw.print(")");
     }
     
     public Type getType() {

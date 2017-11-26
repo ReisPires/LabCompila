@@ -15,7 +15,7 @@ public class StatementAssert extends Statement {
 	@Override
 	public void genC(PW pw) {
 		pw.printIdent("if ( !( ");
-		expr.genC(pw, false);
+		expr.genC(pw);
 		pw.printlnIdent(" ) ) {");
 		pw.add();
 		pw.printlnIdent("puts(\"" + message +  "\");");

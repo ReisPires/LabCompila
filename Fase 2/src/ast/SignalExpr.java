@@ -16,13 +16,9 @@ public class SignalExpr extends Expr {
     }
 
     @Override
-	public void genC( PW pw, boolean putParenthesis ) {
-       if ( putParenthesis )
-          pw.printIdent("(");
-       pw.printIdent( oper == Symbol.PLUS ? "+" : "-" );
-       expr.genC(pw, true);
-       if ( putParenthesis )
-          pw.printIdent(")");
+	public void genC( PW pw ) {
+        pw.print(oper.toString());
+        expr.genC(pw);
     }
 
     @Override
