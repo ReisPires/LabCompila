@@ -27,11 +27,17 @@ public class ExprList {
 
         int size = exprList.size();
         for ( Expr e : exprList ) {
-                if (e instanceof LiteralString && !isOutput)
-                    pw.print("new string(");                
+                if (e instanceof LiteralString) {
+                    if (!isOutput)
+                        pw.print("new string(");          
+                } else if (e.getType() instanceof TypeString && isOutput)
+                    pw.print("*(");
                 e.genC(pw);
-                if (e instanceof LiteralString && !isOutput)
-                    pw.print(")");                
+                if (e instanceof LiteralString) {
+                    if (!isOutput)
+                        pw.print(")");          
+                } else if (e.getType() instanceof TypeString && isOutput)
+                    pw.print(")");
             if ( --size > 0 )
                 if (isOutput)
                     pw.print(" << ");

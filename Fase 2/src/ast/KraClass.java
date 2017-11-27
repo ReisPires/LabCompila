@@ -95,7 +95,7 @@ public class KraClass extends Type {
             while(itr.hasNext()) {
                 InstanceVariable instanceVariable = (InstanceVariable)itr.next();
                 if (instanceVariable.getQualifier().compareTo("private") == 0) {
-                    instanceVariable.genC(pw, false);
+                    instanceVariable.genC(pw);
                 }
                 else {
                     hasPublic = true;
@@ -141,8 +141,11 @@ public class KraClass extends Type {
            }
            
            /* Metodos */
-           for (MethodDec md : methodList) {               
-               md.genC(pw);               
+           for (MethodDec md : methodList) { 
+                if (md.getVariable().getQualifier().compareTo("public") == 0) {
+                    md.genC(pw);
+                } 
+                             
            }
            pw.sub();
         }

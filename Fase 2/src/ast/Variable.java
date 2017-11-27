@@ -46,12 +46,9 @@ public class Variable {
         }                
     }
     
-    public void genC(PW pw, boolean isLocalVarDec) {
+    public void genC(PW pw) {
         if (type instanceof TypeString || type instanceof KraClass) {
-            pw.printIdent(type.getCname() + " *" + name);  
-            if (type instanceof TypeString && isLocalVarDec) {
-                 pw.print(" = new string()");  
-            }
+            pw.printIdent(type.getCname() + " *" + name);            
         }        
         else {
             pw.printIdent(type.getCname() + " " + name);  

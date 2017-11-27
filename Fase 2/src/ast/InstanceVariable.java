@@ -19,8 +19,8 @@ public class InstanceVariable extends Variable {
     }
 
     @Override
-    public void genC(PW pw, boolean isLocalVarDec) {
-        super.genC(pw, false);
+    public void genC(PW pw) {
+        super.genC(pw);
         pw.println(";");
     }
 }

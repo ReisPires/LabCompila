@@ -17,13 +17,25 @@ public class AssignExpr extends AssignExprLocalDec {
     public void genC(PW pw) {        
         if (expr1 instanceof MessageSendToVariable || expr1 instanceof MessageSendToSuper || expr1 instanceof MessageSendToSelf)
             pw.printIdent("");
+        if (expr1.getType() instanceof TypeString && !(expr1 instanceof LiteralString) && expr2 != null && !(expr2.getType() instanceof TypeUndefined)) {
+            pw.print("*(");   
+        }
         expr1.genC(pw);
+        if (expr1.getType() instanceof TypeString && !(expr1 instanceof LiteralString) && expr2 != null && !(expr2.getType() instanceof TypeUndefined)) {
+            pw.print(")");   
+        }
         if (expr2 != null) {
             pw.print(" = ");
+            if (expr2.getType() instanceof TypeString && !(expr2 instanceof LiteralString)) {
+                pw.print("*(");   
+            }
             expr2.genC(pw);
+            if (expr2.getType() instanceof TypeString && !(expr2 instanceof LiteralString)) {
+                pw.print(")");   
+            }
         }
         pw.println(";");
-    }
+    }    
         
     @Override
     public void genKra(PW pw) {

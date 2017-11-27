@@ -18,7 +18,7 @@ public class StatementWrite extends Statement {
         pw.printIdent("cout << ");        
         exprList.genC(pw, true);
         if (hasLineBreak)
-            pw.print("<< endl");
+            pw.print(" << endl");
         pw.println(";");
     }                    
     

@@ -25,8 +25,10 @@ public class LocalDec extends AssignExprLocalDec {
             while (itr.hasNext()) {
                 Variable v = (Variable)itr.next();
                 if (type instanceof TypeString || type instanceof KraClass)
-                    pw.print("*");
+                    pw.print("*");                
                 pw.print(v.getName());
+                if (type instanceof TypeString)
+                    pw.print(" = new string()");
                 if (i++ < varList.getSize() - 1)
                     pw.print(", ");
             }

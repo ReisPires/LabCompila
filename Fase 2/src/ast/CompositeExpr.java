@@ -19,10 +19,23 @@ public class CompositeExpr extends Expr {
     
     @Override
 	public void genC( PW pw ) {
+        if (left.getType() instanceof TypeString && !(left instanceof LiteralString) && right != null && !(right.getType() instanceof TypeUndefined)) {
+            pw.print("*(");
+        }
         left.genC(pw);
+        if (left.getType() instanceof TypeString && !(left instanceof LiteralString) && right != null && !(right.getType() instanceof TypeUndefined)) {
+            pw.print(")");
+        }
         if (right != null) {
             pw.print(" " + oper.toString() + " ");
+            if (right.getType() instanceof TypeString && !(right instanceof LiteralString) && !(left.getType() instanceof TypeUndefined)) {
+                pw.print("*(");
+            }
             right.genC(pw);
+            
+            if (right.getType() instanceof TypeString && !(right instanceof LiteralString) && !(left.getType() instanceof TypeUndefined)) {
+                pw.print(")");
+            }
         }        
     }
 

@@ -47,7 +47,7 @@ public class MethodDec {
     }
     
     public void genC(PW pw) {
-        variable.genC(pw, false);
+        variable.genC(pw);
         pw.print("(");
         if (variable.getParam() != null) {            
             Iterator itr = variable.getParam().elements();
